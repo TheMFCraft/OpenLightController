@@ -147,7 +147,7 @@ OpenLightController/
 │   └── src-tauri/         # Rust engine, Art-Net / sACN, Stream Deck
 ├── fixtures/library/      # JSON fixture definitions (reference)
 ├── docs/brand/            # Brand assets (app / taskbar icon)
-│   └── app-icon.png
+│   └── olc-icon.png
 ├── packages/shared/       # Shared notes / future DTOs
 └── README.md
 ```
