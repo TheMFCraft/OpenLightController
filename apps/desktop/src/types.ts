@@ -7,6 +7,12 @@ export type FeatureGroup =
   | "color_wheel"
   | "other";
 
+export interface AttributeChoice {
+  label: string;
+  dmxMin: number;
+  dmxMax: number;
+}
+
 export interface AttributeDef {
   name: string;
   featureGroup: FeatureGroup;
@@ -14,6 +20,7 @@ export interface AttributeDef {
   fineOffset: number | null;
   default: number;
   highlight: number;
+  choices?: AttributeChoice[];
 }
 
 export interface FixtureDefinition {

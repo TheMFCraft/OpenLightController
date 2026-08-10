@@ -38,10 +38,10 @@ It runs natively on **Windows**, **macOS**, and **Linux** via [Tauri 2](https://
 
 ### Fixture library (excerpt)
 
-- **Laserworld** — EL / CS / DS / PL / tarm / Clubmax / CUBE (DJ + Professional modes)
+- **Laserworld** — EL-230RGB (9ch), EL / CS / DS / PL / tarm / Clubmax / CUBE (DJ + Professional modes)
 - **Fun Generation** — Laser Derby, Mini Laser, LED Pot, UV, Strobe
 - **Stairville** — DJLase, LED PAR, MH movers, fog, LED bars
-- **Generic** — Dimmer, RGB(W), LED Wash (7ch), moving lights, atmos
+- **Generic** — Dimmer packs, RGB(W/A/UV), COB, bars/pixels, strobes, movers (spot/wash/beam), lasers, atmos
 - Also: Chauvet, Martin-style profiles
 
 ## Quick start

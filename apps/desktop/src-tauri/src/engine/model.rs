@@ -18,6 +18,15 @@ pub enum FeatureGroup {
     Other,
 }
 
+/// Discrete DMX range shown as a labeled selector in the programmer.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AttributeChoice {
+    pub label: String,
+    pub dmx_min: u8,
+    pub dmx_max: u8,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AttributeDef {
@@ -27,6 +36,9 @@ pub struct AttributeDef {
     pub fine_offset: Option<u16>,
     pub default: u8,
     pub highlight: u8,
+    /// If non-empty, the UI prefers a select over a continuous fader.
+    #[serde(default)]
+    pub choices: Vec<AttributeChoice>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

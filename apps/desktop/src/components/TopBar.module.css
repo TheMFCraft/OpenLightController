@@ -32,6 +32,15 @@
   font-size: 0.85rem;
 }
 
+.path {
+  opacity: 0.75;
+}
+
+.status {
+  color: color-mix(in srgb, var(--accent) 80%, var(--muted));
+  font-size: 0.75rem;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

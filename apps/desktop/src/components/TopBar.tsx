@@ -8,12 +8,27 @@ interface Props {
   onOpenStreamDeck: () => void;
 }
 
+function fileLabel(path: string | null): string | null {
+  if (!path) return null;
+  const parts = path.split(/[/\\]/);
+  return parts[parts.length - 1] || path;
+}
+
 export function TopBar({ onOpenPatch, onOpenNetwork, onOpenStreamDeck }: Props) {
   const state = useConsoleStore((s) => s.state);
   const run = useConsoleStore((s) => s.run);
   const error = useConsoleStore((s) => s.error);
+  const dirty = useConsoleStore((s) => s.dirty);
+  const showPath = useConsoleStore((s) => s.showPath);
+  const autosaveStatus = useConsoleStore((s) => s.autosaveStatus);
+  const newShow = useConsoleStore((s) => s.newShow);
+  const openShow = useConsoleStore((s) => s.openShow);
+  const saveShow = useConsoleStore((s) => s.saveShow);
+  const saveShowAs = useConsoleStore((s) => s.saveShowAs);
 
   if (!state) return null;
+
+  const pathName = fileLabel(showPath);
 
   return (
     <header className={styles.wrap}>
@@ -21,41 +36,25 @@ export function TopBar({ onOpenPatch, onOpenNetwork, onOpenStreamDeck }: Props) 
         <div className={styles.brand}>
           Open<span>Light</span>Controller
         </div>
-        <span className={styles.show}>{state.name}</span>
+        <span className={styles.show}>
+          {state.name}
+          {dirty ? " *" : ""}
+          {pathName ? <span className={styles.path}> · {pathName}</span> : null}
+        </span>
+        {autosaveStatus && <span className={styles.status}>{autosaveStatus}</span>}
       </div>
       <div className={styles.actions}>
-        <button type="button" onClick={() => run(() => api.newShow())}>
+        <button type="button" onClick={() => void newShow()}>
           New
         </button>
-        <button
-          type="button"
-          onClick={async () => {
-            const { open } = await import("@tauri-apps/plugin-dialog");
-            const path = await open({
-              multiple: false,
-              filters: [{ name: "Show", extensions: ["json"] }],
-            });
-            if (typeof path === "string") {
-              await run(() => api.loadShow(path));
-            }
-          }}
-        >
+        <button type="button" onClick={() => void openShow()}>
           Open
         </button>
-        <button
-          type="button"
-          onClick={async () => {
-            const { save } = await import("@tauri-apps/plugin-dialog");
-            const path = await save({
-              filters: [{ name: "Show", extensions: ["json"] }],
-              defaultPath: "show.json",
-            });
-            if (typeof path === "string") {
-              await run(() => api.saveShow(path));
-            }
-          }}
-        >
+        <button type="button" onClick={() => void saveShow()}>
           Save
+        </button>
+        <button type="button" onClick={() => void saveShowAs()}>
+          Save As
         </button>
         <button type="button" onClick={onOpenPatch}>
           Patch
@@ -69,18 +68,16 @@ export function TopBar({ onOpenPatch, onOpenNetwork, onOpenStreamDeck }: Props) 
         <button
           type="button"
           className={state.blackout ? "danger" : undefined}
-          onClick={() => run(() => api.setBlackout(!state.blackout))}
+          onClick={() => void run(() => api.setBlackout(!state.blackout))}
         >
           {state.blackout ? "Blackout ON" : "Blackout"}
         </button>
         <button
           type="button"
           className={state.outputEnabled ? "primary" : undefined}
-          onClick={() => run(() => api.setOutputEnabled(!state.outputEnabled))}
+          onClick={() => void run(() => api.setOutputEnabled(!state.outputEnabled))}
         >
-          <span
-            className={`${styles.dot} ${state.outputEnabled ? styles.on : ""}`}
-          />
+          <span className={`${styles.dot} ${state.outputEnabled ? styles.on : ""}`} />
           {state.outputEnabled ? "Output On" : "Output Off"}
         </button>
       </div>
