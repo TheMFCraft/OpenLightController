@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/brand/logo.png" alt="OpenLightController logo" width="160" height="160" />
+  <img src="docs/brand/app-icon.png" alt="OpenLightController logo" width="160" height="160" />
 </p>
 
 <h1 align="center">OpenLightController</h1>
@@ -147,7 +147,7 @@ OpenLightController/
 │   └── src-tauri/         # Rust engine, Art-Net / sACN, Stream Deck
 ├── fixtures/library/      # JSON fixture definitions (reference)
 ├── docs/brand/            # Brand assets (app / taskbar icon)
-│   └── logo.png
+│   └── app-icon.png
 ├── packages/shared/       # Shared notes / future DTOs
 └── README.md
 ```
