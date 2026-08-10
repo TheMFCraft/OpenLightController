@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/brand/app-icon.png" alt="OpenLightController logo" width="160" height="160" />
+  <img src="docs/brand/olc-icon.png" alt="OpenLightController logo" width="160" height="160" />
 </p>
 
 <h1 align="center">OpenLightController</h1>
