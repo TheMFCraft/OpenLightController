@@ -1,0 +1,146 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            platform: windows-latest
+            bundles: nsis
+            args: --bundles nsis
+
+          - name: linux-x64
+            platform: ubuntu-22.04
+            bundles: deb
+            args: --bundles deb
+
+          - name: macos-universal
+            platform: macos-latest
+            bundles: app
+            args: --target universal-apple-darwin --bundles app
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+    runs-on: ${{ matrix.platform }}
+
+    defaults:
+      run:
+        working-directory: apps/desktop
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync version from release tag
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          echo "Release version: ${VERSION}"
+          export VERSION
+
+          node <<'EOF'
+          const fs = require("fs");
+          const version = process.env.VERSION;
+
+          const pkgPath = "apps/desktop/package.json";
+          const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+          pkg.version = version;
+          fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
+
+          const tauriPath = "apps/desktop/src-tauri/tauri.conf.json";
+          const tauri = JSON.parse(fs.readFileSync(tauriPath, "utf8"));
+          tauri.version = version;
+          fs.writeFileSync(tauriPath, JSON.stringify(tauri, null, 2) + "\n");
+
+          const cargoPath = "apps/desktop/src-tauri/Cargo.toml";
+          let cargo = fs.readFileSync(cargoPath, "utf8");
+          cargo = cargo.replace(/^version = ".*"$/m, `version = "${version}"`);
+          fs.writeFileSync(cargoPath, cargo);
+          EOF
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libudev-dev \
+            xdg-utils
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          releaseId: ${{ github.event.release.id }}
+          includeUpdaterJson: false
+          args: ${{ matrix.args }}
+
+      - name: Create macOS .pkg installer
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+
+          APP_PATH="$(find apps/desktop/src-tauri/target -type d -name 'OpenLightController.app' | head -n 1)"
+          if [[ -z "${APP_PATH}" ]]; then
+            echo "OpenLightController.app not found"
+            find apps/desktop/src-tauri/target -maxdepth 6 -type d -name '*.app' || true
+            exit 1
+          fi
+
+          echo "Packaging: ${APP_PATH}"
+          PKG_NAME="OpenLightController_${VERSION}_macos_universal.pkg"
+          pkgbuild \
+            --install-location /Applications \
+            --component "${APP_PATH}" \
+            "${PKG_NAME}"
+
+          gh release upload "${TAG}" "${PKG_NAME}" --clobber
+          echo "Uploaded ${PKG_NAME}"

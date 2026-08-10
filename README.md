@@ -109,6 +109,23 @@ Root shortcut:
 npm run build
 ```
 
+## Releases (CI)
+
+Creating a **GitHub Release** (e.g. tag `v0.2.0`) triggers [`.github/workflows/release.yml`](.github/workflows/release.yml), which builds and uploads:
+
+| Platform | Artifact |
+|----------|----------|
+| Windows | `.exe` (NSIS installer) |
+| Linux | `.deb` |
+| macOS | `.pkg` (universal Intel + Apple Silicon) |
+
+1. Push your changes to `main`
+2. On GitHub: **Releases → Draft a new release**
+3. Create a tag like `v0.2.0` and publish
+4. Wait for the workflow; installers appear under that release’s assets
+
+> macOS `.pkg` is currently unsigned. First open may require **Right-click → Open** (or allow in System Settings → Privacy & Security).
+
 ## Tests
 
 ```bash
