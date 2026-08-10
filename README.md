@@ -129,7 +129,7 @@ OpenLightController/
 ├── apps/desktop/          # Tauri 2 + React / TypeScript UI
 │   └── src-tauri/         # Rust engine, Art-Net / sACN, Stream Deck
 ├── fixtures/library/      # JSON fixture definitions (reference)
-├── docs/brand/            # Logo & brand assets
+├── docs/brand/            # Brand assets (app / taskbar icon)
 │   └── logo.png
 ├── packages/shared/       # Shared notes / future DTOs
 └── README.md
