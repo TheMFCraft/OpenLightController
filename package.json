@@ -1,0 +1,11 @@
+{
+  "name": "openlightcontroller",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Cross-platform lighting controller with Art-Net and sACN",
+  "scripts": {
+    "dev": "npm --prefix apps/desktop run tauri dev",
+    "build": "npm --prefix apps/desktop run tauri build",
+    "test": "cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml"
+  }
+}

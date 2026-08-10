@@ -1,0 +1,41 @@
+{
+  "id": "generic.rgbw",
+  "manufacturer": "Generic",
+  "name": "RGBW Par",
+  "mode": "4ch",
+  "channel_count": 4,
+  "attributes": [
+    {
+      "name": "red",
+      "feature_group": "color",
+      "offset": 0,
+      "fine_offset": null,
+      "default": 0,
+      "highlight": 255
+    },
+    {
+      "name": "green",
+      "feature_group": "color",
+      "offset": 1,
+      "fine_offset": null,
+      "default": 0,
+      "highlight": 255
+    },
+    {
+      "name": "blue",
+      "feature_group": "color",
+      "offset": 2,
+      "fine_offset": null,
+      "default": 0,
+      "highlight": 255
+    },
+    {
+      "name": "white",
+      "feature_group": "color",
+      "offset": 3,
+      "fine_offset": null,
+      "default": 0,
+      "highlight": 255
+    }
+  ]
+}

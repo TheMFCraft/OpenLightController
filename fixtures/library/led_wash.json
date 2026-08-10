@@ -1,0 +1,16 @@
+{
+  "id": "generic.led_wash",
+  "manufacturer": "Generic",
+  "name": "LED Wash",
+  "mode": "7ch",
+  "channel_count": 7,
+  "attributes": [
+    { "name": "dimmer", "feature_group": "dimmer", "offset": 0, "fine_offset": null, "default": 0, "highlight": 255 },
+    { "name": "shutter", "feature_group": "beam", "offset": 1, "fine_offset": null, "default": 255, "highlight": 255 },
+    { "name": "red", "feature_group": "color", "offset": 2, "fine_offset": null, "default": 0, "highlight": 255 },
+    { "name": "green", "feature_group": "color", "offset": 3, "fine_offset": null, "default": 0, "highlight": 255 },
+    { "name": "blue", "feature_group": "color", "offset": 4, "fine_offset": null, "default": 0, "highlight": 255 },
+    { "name": "white", "feature_group": "color", "offset": 5, "fine_offset": null, "default": 0, "highlight": 255 }
+  ],
+  "unbound_channels": [7]
+}

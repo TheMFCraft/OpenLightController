@@ -1,0 +1,17 @@
+{
+  "id": "generic.dimmer",
+  "manufacturer": "Generic",
+  "name": "Dimmer",
+  "mode": "1ch",
+  "channel_count": 1,
+  "attributes": [
+    {
+      "name": "dimmer",
+      "feature_group": "dimmer",
+      "offset": 0,
+      "fine_offset": null,
+      "default": 0,
+      "highlight": 255
+    }
+  ]
+}

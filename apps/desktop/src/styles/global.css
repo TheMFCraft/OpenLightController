@@ -1,0 +1,127 @@
+:root {
+  color-scheme: dark;
+  --bg-0: #0c0f12;
+  --bg-1: #141a1f;
+  --bg-2: #1c242c;
+  --bg-3: #263039;
+  --line: #2e3a45;
+  --text: #e8eef3;
+  --muted: #8b9aab;
+  --accent: #3d9e7a;
+  --accent-2: #d4a017;
+  --danger: #c45c5c;
+  --selected: #2a4a3d;
+  --programmer: #3a2f12;
+  --font-ui: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+  accent-color: var(--accent);
+  scrollbar-color: #4a5a68 transparent;
+  scrollbar-width: thin;
+  font-family: var(--font-ui);
+  background: var(--bg-0);
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 0.35rem 0.65rem;
+}
+
+button:hover {
+  background: var(--bg-3);
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: #2f7a5e;
+  color: #04140e;
+  font-weight: 600;
+}
+
+button.danger {
+  border-color: #7a3535;
+  color: #ffd0d0;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  background: var(--bg-0);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+}
+
+input[type="range"] {
+  width: 100%;
+}
+
+.panel {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel h2 {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-body {
+  padding: 0.65rem;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}

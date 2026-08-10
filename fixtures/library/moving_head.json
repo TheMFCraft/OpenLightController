@@ -1,0 +1,15 @@
+{
+  "id": "generic.moving_head",
+  "manufacturer": "Generic",
+  "name": "Simple Moving Head",
+  "mode": "8ch",
+  "channel_count": 8,
+  "attributes": [
+    { "name": "pan", "feature_group": "position", "offset": 0, "fine_offset": 1, "default": 127, "highlight": 127 },
+    { "name": "tilt", "feature_group": "position", "offset": 2, "fine_offset": 3, "default": 127, "highlight": 127 },
+    { "name": "dimmer", "feature_group": "dimmer", "offset": 4, "fine_offset": null, "default": 0, "highlight": 255 },
+    { "name": "red", "feature_group": "color", "offset": 5, "fine_offset": null, "default": 0, "highlight": 255 },
+    { "name": "green", "feature_group": "color", "offset": 6, "fine_offset": null, "default": 0, "highlight": 255 },
+    { "name": "blue", "feature_group": "color", "offset": 7, "fine_offset": null, "default": 0, "highlight": 255 }
+  ]
+}

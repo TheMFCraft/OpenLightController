@@ -1,0 +1,33 @@
+{
+  "id": "generic.rgb",
+  "manufacturer": "Generic",
+  "name": "RGB Par",
+  "mode": "3ch",
+  "channel_count": 3,
+  "attributes": [
+    {
+      "name": "red",
+      "feature_group": "color",
+      "offset": 0,
+      "fine_offset": null,
+      "default": 0,
+      "highlight": 255
+    },
+    {
+      "name": "green",
+      "feature_group": "color",
+      "offset": 1,
+      "fine_offset": null,
+      "default": 0,
+      "highlight": 255
+    },
+    {
+      "name": "blue",
+      "feature_group": "color",
+      "offset": 2,
+      "fine_offset": null,
+      "default": 0,
+      "highlight": 255
+    }
+  ]
+}

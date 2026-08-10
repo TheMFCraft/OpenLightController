@@ -1,0 +1,36 @@
+[package]
+name = "desktop"
+version = "0.1.0"
+description = "OpenLightController — cross-platform lighting console"
+authors = ["OpenLightController"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1.24.0", features = ["v4", "serde"] }
+parking_lot = "0.12.5"
+thiserror = "2.0.20"
+anyhow = "1.0.104"
+socket2 = "0.6.5"
+tauri-plugin-dialog = "2.7.2"
+elgato-streamdeck = "0.13.1"
+image = { version = "0.25.10", features = ["default"] }
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
