@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useConsoleStore } from "../store";
 import type { OutputConfig } from "../types";
-import { TouchTextInput } from "./TouchTextInput";
 
 interface Props {
   open: boolean;
@@ -75,14 +74,9 @@ export function NetworkDialog({ open, onClose }: Props) {
             <input
               type="checkbox"
               checked={config.artnetBroadcast}
-              onChange={(e) => {
-                const artnetBroadcast = e.target.checked;
-                setConfig({
-                  ...config,
-                  artnetBroadcast,
-                  artnetTarget: artnetBroadcast ? "255.255.255.255" : config.artnetTarget,
-                });
-              }}
+              onChange={(e) =>
+                setConfig({ ...config, artnetBroadcast: e.target.checked })
+              }
             />
             Art-Net Broadcast
           </label>
@@ -96,21 +90,15 @@ export function NetworkDialog({ open, onClose }: Props) {
         >
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.8rem", color: "var(--muted)" }}>
             Art-Net Target IP
-            <TouchTextInput
+            <input
               type="text"
               spellCheck={false}
               placeholder="192.168.1.100"
-              disabled={config.artnetBroadcast}
               value={config.artnetTarget}
-              onChange={(artnetTarget) =>
-                setConfig({ ...config, artnetTarget, artnetBroadcast: false })
+              onChange={(e) =>
+                setConfig({ ...config, artnetTarget: e.target.value })
               }
             />
-            {config.artnetBroadcast ? (
-              <span style={{ fontSize: "0.72rem" }}>
-                Disable broadcast to send to a specific node IP.
-              </span>
-            ) : null}
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.8rem", color: "var(--muted)" }}>
             sACN Priority
