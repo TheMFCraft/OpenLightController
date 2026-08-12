@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useConsoleStore } from "../store";
 import type { OutputConfig } from "../types";
+import { TouchTextInput } from "./TouchTextInput";
 
 interface Props {
   open: boolean;
@@ -14,8 +15,10 @@ export function NetworkDialog({ open, onClose }: Props) {
   const [config, setConfig] = useState<OutputConfig | null>(null);
 
   useEffect(() => {
-    if (open && state) setConfig(structuredClone(state.output));
-  }, [open, state]);
+    if (!open) return;
+    const output = useConsoleStore.getState().state?.output;
+    if (output) setConfig(structuredClone(output));
+  }, [open]);
 
   if (!open || !state || !config) return null;
 
@@ -72,9 +75,14 @@ export function NetworkDialog({ open, onClose }: Props) {
             <input
               type="checkbox"
               checked={config.artnetBroadcast}
-              onChange={(e) =>
-                setConfig({ ...config, artnetBroadcast: e.target.checked })
-              }
+              onChange={(e) => {
+                const artnetBroadcast = e.target.checked;
+                setConfig({
+                  ...config,
+                  artnetBroadcast,
+                  artnetTarget: artnetBroadcast ? "255.255.255.255" : config.artnetTarget,
+                });
+              }}
             />
             Art-Net Broadcast
           </label>
@@ -88,13 +96,21 @@ export function NetworkDialog({ open, onClose }: Props) {
         >
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.8rem", color: "var(--muted)" }}>
             Art-Net Target IP
-            <input
+            <TouchTextInput
               type="text"
+              spellCheck={false}
+              placeholder="192.168.1.100"
+              disabled={config.artnetBroadcast}
               value={config.artnetTarget}
-              onChange={(e) =>
-                setConfig({ ...config, artnetTarget: e.target.value })
+              onChange={(artnetTarget) =>
+                setConfig({ ...config, artnetTarget, artnetBroadcast: false })
               }
             />
+            {config.artnetBroadcast ? (
+              <span style={{ fontSize: "0.72rem" }}>
+                Disable broadcast to send to a specific node IP.
+              </span>
+            ) : null}
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.8rem", color: "var(--muted)" }}>
             sACN Priority
