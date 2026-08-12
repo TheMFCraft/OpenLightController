@@ -5,12 +5,15 @@ import { AttributePanel } from "./components/AttributePanel";
 import { CueListPanel } from "./components/CueListPanel";
 import { FixtureGrid } from "./components/FixtureGrid";
 import { GroupPresetPanel } from "./components/GroupPresetPanel";
+import { KeyboardProvider } from "./components/KeyboardContext";
 import { NetworkDialog } from "./components/NetworkDialog";
 import { PatchDialog } from "./components/PatchDialog";
 import { PlaybackBar } from "./components/PlaybackBar";
+import { SettingsDialog } from "./components/SettingsDialog";
 import { StreamDeckDialog } from "./components/StreamDeckDialog";
 import { TopBar } from "./components/TopBar";
 import { api } from "./api";
+import { usePreferencesStore } from "./preferencesStore";
 import { useConsoleStore } from "./store";
 import styles from "./App.module.css";
 
@@ -30,6 +33,12 @@ export default function App() {
   const [patchOpen, setPatchOpen] = useState(false);
   const [networkOpen, setNetworkOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const touchMode = usePreferencesStore((s) => s.touchMode);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("touch-mode", touchMode);
+  }, [touchMode]);
 
   useEffect(() => {
     void (async () => {
@@ -110,33 +119,54 @@ export default function App() {
     });
   }, [dirty, state?.name]);
 
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      void (async () => {
+        const { loadSavedMappings, saveMappings } = await import("./streamDeckIcons");
+        const saved = loadSavedMappings();
+        if (!saved?.length) return;
+        try {
+          const st = await api.setStreamDeckMappings(saved as import("./types").DeckKeyMapping[]);
+          saveMappings(st.mappings);
+        } catch {
+          /* deck may still be connecting */
+        }
+      })();
+    }, 1500);
+    return () => window.clearTimeout(id);
+  }, []);
+
   return (
-    <div className={styles.layout}>
-      <TopBar
-        onOpenPatch={() => setPatchOpen(true)}
-        onOpenNetwork={() => setNetworkOpen(true)}
-        onOpenStreamDeck={() => setDeckOpen(true)}
-      />
-      {!state ? (
-        <div className="muted" style={{ padding: "1rem" }}>
-          Loading console…
-        </div>
-      ) : (
-        <>
-          <main className={styles.main}>
-            <div style={{ display: "grid", gridTemplateRows: "1fr 1fr", gap: "0.55rem", minHeight: 0 }}>
-              <FixtureGrid />
-              <GroupPresetPanel />
-            </div>
-            <AttributePanel />
-            <CueListPanel />
-          </main>
-          <PlaybackBar />
-        </>
-      )}
-      <PatchDialog open={patchOpen} onClose={() => setPatchOpen(false)} />
-      <NetworkDialog open={networkOpen} onClose={() => setNetworkOpen(false)} />
-      <StreamDeckDialog open={deckOpen} onClose={() => setDeckOpen(false)} />
-    </div>
+    <KeyboardProvider>
+      <div className={`${styles.layout} ${touchMode ? "touch-layout" : ""}`}>
+        <TopBar
+          onOpenPatch={() => setPatchOpen(true)}
+          onOpenNetwork={() => setNetworkOpen(true)}
+          onOpenStreamDeck={() => setDeckOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+        {!state ? (
+          <div className="muted" style={{ padding: "1rem" }}>
+            Loading console…
+          </div>
+        ) : (
+          <>
+            <main className={styles.main}>
+              <div style={{ display: "grid", gridTemplateRows: "1fr 1fr", gap: "0.55rem", minHeight: 0 }}>
+                <FixtureGrid />
+                <GroupPresetPanel />
+              </div>
+              <AttributePanel />
+              <CueListPanel />
+            </main>
+            <PlaybackBar />
+          </>
+        )}
+        <PatchDialog open={patchOpen} onClose={() => setPatchOpen(false)} />
+        <NetworkDialog open={networkOpen} onClose={() => setNetworkOpen(false)} />
+        <StreamDeckDialog open={deckOpen} onClose={() => setDeckOpen(false)} />
+        <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      </div>
+    </KeyboardProvider>
   );
 }

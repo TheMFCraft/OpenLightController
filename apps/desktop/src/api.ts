@@ -2,10 +2,12 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   DeckKeyMapping,
   FeatureGroup,
+  MonitorInfo,
   OutputConfig,
   ShowState,
   StreamDeckDeviceInfo,
   StreamDeckStatus,
+  WebRemoteStatus,
 } from "./types";
 
 export const api = {
@@ -65,6 +67,7 @@ export const api = {
   setOutputEnabled: (enabled: boolean) =>
     invoke<ShowState>("set_output_enabled", { enabled }),
   newShow: () => invoke<ShowState>("new_show"),
+  setShowName: (name: string) => invoke<ShowState>("set_show_name", { name }),
   saveShow: (path: string) => invoke<ShowState>("save_show", { path }),
   loadShow: (path: string) => invoke<ShowState>("load_show", { path }),
   getUniverseSnapshot: (universe: number) =>
@@ -80,4 +83,15 @@ export const api = {
     invoke<StreamDeckStatus>("assign_streamdeck_key", { mapping }),
   fireCue: (cueListId: string, cueId: string) =>
     invoke<ShowState>("fire_cue", { cueListId, cueId }),
+  getWebRemoteStatus: () => invoke<WebRemoteStatus>("get_webremote_status"),
+  startWebRemote: (port: number) => invoke<WebRemoteStatus>("start_webremote", { port }),
+  stopWebRemote: () => invoke<WebRemoteStatus>("stop_webremote"),
+  listMonitors: () => invoke<MonitorInfo[]>("list_monitors"),
+  openExternalDisplay: (monitorIndex: number, fullscreen?: boolean) =>
+    invoke<void>("open_external_display", {
+      monitorIndex,
+      fullscreen: fullscreen ?? null,
+    }),
+  closeExternalDisplay: () => invoke<void>("close_external_display"),
+  isExternalDisplayOpen: () => invoke<boolean>("is_external_display_open"),
 };

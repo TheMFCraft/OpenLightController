@@ -1,0 +1,58 @@
+.overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: linear-gradient(transparent, rgb(0 0 0 / 55%) 20%);
+  padding: 0.5rem;
+}
+
+.panel {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.5rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.preview {
+  padding: 0.55rem 0.75rem;
+  background: var(--bg-0);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  min-height: 2.5rem;
+  font-size: 1.05rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.3rem;
+  justify-content: center;
+}
+
+.key,
+.wide,
+.space,
+.done {
+  min-height: 48px;
+  min-width: 2.4rem;
+  font-size: 1rem;
+}
+
+.wide {
+  min-width: 4.5rem;
+}
+
+.space {
+  flex: 1;
+}
+
+.done {
+  min-width: 5rem;
+  background: var(--accent);
+  border-color: #2f7a5e;
+  color: #04140e;
+  font-weight: 600;
+}

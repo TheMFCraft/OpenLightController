@@ -30,6 +30,9 @@ socket2 = "0.6.5"
 tauri-plugin-dialog = "2.7.2"
 elgato-streamdeck = "0.13.1"
 image = { version = "0.25.10", features = ["default"] }
+axum = { version = "0.8", features = ["json"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
+tower-http = { version = "0.6", features = ["cors"] }
 
 [dev-dependencies]
 tempfile = "3.27.0"

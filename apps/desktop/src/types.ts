@@ -143,6 +143,7 @@ export interface DeckKeyMapping {
   label: string;
   action: DeckAction;
   color: [number, number, number];
+  icon?: string;
 }
 
 export interface StreamDeckDeviceInfo {
@@ -162,4 +163,21 @@ export interface StreamDeckStatus {
   columns: number;
   mappings: DeckKeyMapping[];
   lastError: string | null;
+}
+
+export interface WebRemoteStatus {
+  running: boolean;
+  port: number;
+  localIp: string | null;
+  lastError: string | null;
+}
+
+export interface MonitorInfo {
+  index: number;
+  name: string;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  primary: boolean;
 }

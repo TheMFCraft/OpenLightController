@@ -627,6 +627,15 @@ impl ShowEngine {
         self.blackout = false;
     }
 
+    pub fn set_show_name(&mut self, name: String) {
+        let trimmed = name.trim();
+        self.show.name = if trimmed.is_empty() {
+            "Untitled Show".into()
+        } else {
+            trimmed.to_string()
+        };
+    }
+
     pub fn save_to_path(&self, path: &Path) -> Result<(), String> {
         crate::showfile::save(path, &self.show)
     }

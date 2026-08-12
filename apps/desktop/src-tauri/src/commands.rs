@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 use crate::engine::model::{FeatureGroup, FixtureDefinition, OutputConfig, ShowStateDto};
 use crate::streamdeck::{DeckKeyMapping, SharedStreamDeck, StreamDeckDeviceInfo, StreamDeckStatus};
+use crate::webremote::{SharedWebRemote, WebRemoteStatus};
 use crate::SharedEngine;
 
 fn map_err(e: String) -> String {
@@ -256,6 +257,16 @@ pub fn set_output_enabled(
 }
 
 #[tauri::command]
+pub fn set_show_name(
+    engine: State<'_, SharedEngine>,
+    name: String,
+) -> Result<ShowStateDto, String> {
+    let mut eng = engine.write();
+    eng.set_show_name(name);
+    Ok(eng.state_dto())
+}
+
+#[tauri::command]
 pub fn new_show(engine: State<'_, SharedEngine>) -> Result<ShowStateDto, String> {
     let mut eng = engine.write();
     eng.new_show();
@@ -353,4 +364,25 @@ pub fn fire_cue(
     let mut eng = engine.write();
     eng.fire_cue(cue_list_id, cue_id).map_err(map_err)?;
     Ok(eng.state_dto())
+}
+
+#[tauri::command]
+pub fn get_webremote_status(webremote: State<'_, SharedWebRemote>) -> WebRemoteStatus {
+    webremote.status()
+}
+
+#[tauri::command]
+pub fn start_webremote(
+    app: AppHandle,
+    engine: State<'_, SharedEngine>,
+    webremote: State<'_, SharedWebRemote>,
+    port: u16,
+) -> Result<WebRemoteStatus, String> {
+    webremote.start(app, engine.inner().clone(), port)
+}
+
+#[tauri::command]
+pub fn stop_webremote(webremote: State<'_, SharedWebRemote>) -> WebRemoteStatus {
+    webremote.stop();
+    webremote.status()
 }

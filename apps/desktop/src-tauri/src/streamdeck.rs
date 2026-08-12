@@ -5,13 +5,14 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use elgato_streamdeck::{list_devices, new_hidapi, StreamDeck, StreamDeckInput};
-use image::{DynamicImage, Rgb, RgbImage};
+use image::DynamicImage;
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 use uuid::Uuid;
 
 use crate::engine::ShowEngine;
+use crate::streamdeck_icons::{default_icon_for_action, render_key_image};
 use crate::SharedEngine;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -50,6 +51,9 @@ pub struct DeckKeyMapping {
     pub label: String,
     pub action: DeckAction,
     pub color: [u8; 3],
+    /// Built-in icon id (see streamdeck_icons::ICON_IDS)
+    #[serde(default)]
+    pub icon: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -81,18 +85,19 @@ fn empty_key(key: u8) -> DeckKeyMapping {
         label: "—".into(),
         action: DeckAction::Empty,
         color: [28, 28, 28],
+        icon: "none".into(),
     }
 }
 
 /// Utility / default actions for the first few keys; rest empty.
 pub fn default_mappings_for_size(key_count: u8) -> Vec<DeckKeyMapping> {
     let presets = [
-        map(0, "BO", DeckAction::BlackoutToggle, [180, 30, 30]),
-        map(1, "CLR", DeckAction::ClearProgrammer, [80, 80, 80]),
-        map(2, "OUT", DeckAction::OutputToggle, [40, 140, 90]),
-        map(3, "GO1", DeckAction::PlaybackGo { index: 0 }, [50, 120, 200]),
-        map(4, "BK1", DeckAction::PlaybackBack { index: 0 }, [40, 80, 140]),
-        map(5, "FULL", DeckAction::DimmerFull, [220, 200, 40]),
+        map(0, "BO", "blackout", DeckAction::BlackoutToggle, [180, 30, 30]),
+        map(1, "CLR", "clear", DeckAction::ClearProgrammer, [80, 80, 80]),
+        map(2, "OUT", "output", DeckAction::OutputToggle, [40, 140, 90]),
+        map(3, "GO1", "go", DeckAction::PlaybackGo { index: 0 }, [50, 120, 200]),
+        map(4, "BK1", "back", DeckAction::PlaybackBack { index: 0 }, [40, 80, 140]),
+        map(5, "FULL", "dimmer", DeckAction::DimmerFull, [220, 200, 40]),
     ];
     (0..key_count)
         .map(|k| {
@@ -117,12 +122,13 @@ pub fn resize_mappings(existing: &[DeckKeyMapping], key_count: u8) -> Vec<DeckKe
         .collect()
 }
 
-fn map(key: u8, label: &str, action: DeckAction, color: [u8; 3]) -> DeckKeyMapping {
+fn map(key: u8, label: &str, icon: &str, action: DeckAction, color: [u8; 3]) -> DeckKeyMapping {
     DeckKeyMapping {
         key,
         label: label.into(),
         action,
         color,
+        icon: icon.into(),
     }
 }
 
@@ -133,6 +139,9 @@ pub struct StreamDeckController {
     mappings: Arc<Mutex<Vec<DeckKeyMapping>>>,
     /// Serial of last connected device — used to reconnect after remapping
     last_serial: Mutex<Option<String>>,
+    /// When true, background watcher reconnects whenever a deck is available.
+    auto_connect: Arc<AtomicBool>,
+    watcher_started: AtomicBool,
 }
 
 impl StreamDeckController {
@@ -152,7 +161,36 @@ impl StreamDeckController {
             })),
             mappings: Arc::new(Mutex::new(vec![])),
             last_serial: Mutex::new(None),
+            auto_connect: Arc::new(AtomicBool::new(true)),
+            watcher_started: AtomicBool::new(false),
         }
+    }
+
+    /// Spawn a background loop that connects the first available Stream Deck.
+    pub fn start_auto_connect_watcher(self: &Arc<Self>, app: AppHandle, engine: SharedEngine) {
+        if self
+            .watcher_started
+            .swap(true, Ordering::SeqCst)
+        {
+            return;
+        }
+        let ctrl = Arc::clone(self);
+        thread::spawn(move || {
+            // Small delay so HID / UI can settle after launch
+            thread::sleep(Duration::from_millis(800));
+            loop {
+                if ctrl.auto_connect.load(Ordering::SeqCst) && !ctrl.status().connected {
+                    let serial = ctrl.last_serial.lock().clone();
+                    if ctrl
+                        .connect(app.clone(), engine.clone(), serial)
+                        .is_err()
+                    {
+                        let _ = ctrl.connect(app.clone(), engine.clone(), None);
+                    }
+                }
+                thread::sleep(Duration::from_secs(4));
+            }
+        });
     }
 
     pub fn status(&self) -> StreamDeckStatus {
@@ -199,7 +237,8 @@ impl StreamDeckController {
         engine: SharedEngine,
         serial: Option<String>,
     ) -> Result<StreamDeckStatus, String> {
-        self.disconnect();
+        self.auto_connect.store(true, Ordering::SeqCst);
+        self.disconnect_internal();
         self.stop.store(false, Ordering::SeqCst);
 
         let hid = new_hidapi().map_err(|e| e.to_string())?;
@@ -322,6 +361,11 @@ impl StreamDeckController {
     }
 
     pub fn disconnect(&self) {
+        self.auto_connect.store(false, Ordering::SeqCst);
+        self.disconnect_internal();
+    }
+
+    fn disconnect_internal(&self) {
         self.stop.store(true, Ordering::SeqCst);
         if let Some(handle) = self.handle.lock().take() {
             let _ = handle.join();
@@ -335,25 +379,54 @@ impl StreamDeckController {
 
 impl Drop for StreamDeckController {
     fn drop(&mut self) {
-        self.disconnect();
+        self.disconnect_internal();
     }
 }
 
 fn paint_buttons(device: &StreamDeck, mappings: &[DeckKeyMapping], key_count: u8) {
     let size = device.kind().key_image_format().size.0.max(1) as u32;
     for key in 0..key_count {
-        let color = mappings
-            .iter()
-            .find(|m| m.key == key)
-            .map(|m| m.color)
-            .unwrap_or([20, 20, 20]);
-        let mut img = RgbImage::new(size, size);
-        for pixel in img.pixels_mut() {
-            *pixel = Rgb(color);
-        }
+        let mapping = mappings.iter().find(|m| m.key == key);
+        let color = mapping.map(|m| m.color).unwrap_or([20, 20, 20]);
+        let label = mapping.map(|m| m.label.as_str()).unwrap_or("");
+        let icon = mapping
+            .map(|m| {
+                if m.icon.is_empty() {
+                    default_icon_for_action(action_type_tag(&m.action))
+                } else {
+                    m.icon.as_str()
+                }
+            })
+            .unwrap_or("none");
+        let img = render_key_image(size, color, icon, label);
         let _ = device.set_button_image(key, DynamicImage::ImageRgb8(img));
     }
     let _ = device.flush();
+}
+
+fn action_type_tag(action: &DeckAction) -> &'static str {
+    match action {
+        DeckAction::Empty => "empty",
+        DeckAction::BlackoutToggle => "blackoutToggle",
+        DeckAction::ClearProgrammer => "clearProgrammer",
+        DeckAction::OutputToggle => "outputToggle",
+        DeckAction::PlaybackGo { .. } => "playbackGo",
+        DeckAction::PlaybackBack { .. } => "playbackBack",
+        DeckAction::DimmerFull => "dimmerFull",
+        DeckAction::DimmerZero => "dimmerZero",
+        DeckAction::ShutterOpen => "shutterOpen",
+        DeckAction::ShutterClosed => "shutterClosed",
+        DeckAction::SelectFid { .. } => "selectFid",
+        DeckAction::ColorRed => "colorRed",
+        DeckAction::ColorGreen => "colorGreen",
+        DeckAction::ColorBlue => "colorBlue",
+        DeckAction::ColorWhite => "colorWhite",
+        DeckAction::ColorCyan => "colorCyan",
+        DeckAction::ColorMagenta => "colorMagenta",
+        DeckAction::ColorYellow => "colorYellow",
+        DeckAction::ColorAmber => "colorAmber",
+        DeckAction::FireCue { .. } => "fireCue",
+    }
 }
 
 fn handle_action(engine: &SharedEngine, action: &DeckAction) {

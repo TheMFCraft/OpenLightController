@@ -33,14 +33,14 @@ It runs natively on **Windows**, **macOS**, and **Linux** via [Tauri 2](https://
 | **Cues** | Tracking cue lists with fade times |
 | **Playbacks** | 8 faders, HTP dimmer / LTP other, programmer priority |
 | **Network** | Art-Net + sACN (E1.31), 4 universes |
-| **Stream Deck** | Connect Elgato Stream Deck, assign cues to keys |
+| **Stream Deck** | Auto-connects Elgato Stream Deck, assign cues to keys |
 | **Showfile** | Save / load JSON shows |
 
 ### Fixture library (excerpt)
 
 - **Laserworld** — EL-230RGB (9ch), EL / CS / DS / PL / tarm / Clubmax / CUBE (DJ + Professional modes)
-- **Fun Generation** — Laser Derby, Mini Laser, LED Pot, UV, Strobe
-- **Stairville** — DJLase, LED PAR, MH movers, fog, LED bars
+- **Fun Generation** — Laser Derby, Mini Laser, PicoSpot 20/45, LED Pot, UV, Strobe
+- **Stairville** — DJLase, Flood TRI Panel, LED PAR, MH movers, fog, LED bars
 - **Generic** — Dimmer packs, RGB(W/A/UV), COB, bars/pixels, strobes, movers (spot/wash/beam), lasers, atmos
 - Also: Chauvet, Martin-style profiles
 
@@ -80,9 +80,11 @@ Example **LED Wash** footprint (7ch): Dimmer · Shutter · R · G · B · W · *
 ## Stream Deck
 
 1. Quit the official Elgato Stream Deck software (it locks HID access)
-2. Open **Stream Deck** → Connect — layout size is detected automatically (Mini, Mk2, XL, …)
-3. Tap a key in the grid → assign a **cue**
-4. Hardware key press fires that cue (with fade)
+2. Plug in the deck — OpenLightController **auto-connects** (and reconnects if unplugged)
+3. Open **Stream Deck** → pick a key → set **action**, **label**, **icon**, and **color**
+4. Hardware keys show icon + label; presses fire the assigned action
+
+> Manual **Disconnect** turns auto-connect off until you connect again. Mappings are remembered locally.
 
 On Linux you may need HID udev rules (see the [`elgato-streamdeck`](https://crates.io/crates/elgato-streamdeck) docs).
 

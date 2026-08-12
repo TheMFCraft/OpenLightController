@@ -749,7 +749,7 @@ fn laserworld_fixtures() -> Vec<FixtureDefinition> {
 // ---------------------------------------------------------------------------
 
 fn fun_generation_fixtures() -> Vec<FixtureDefinition> {
-    vec![
+    let mut out = vec![
         // Laser Derby — 2ch / 8ch
         def(
             "fungeneration.laser_derby.2ch",
@@ -936,7 +936,106 @@ fn fun_generation_fixtures() -> Vec<FixtureDefinition> {
                 attr("mode", FeatureGroup::Other, 3),
             ],
         ),
-    ]
+    ];
+    // PicoSpot 20 / 45 — same DMX map (5 / 9 / 11ch)
+    for (slug, name) in [
+        ("picospot_20", "PicoSpot 20 LED"),
+        ("picospot_45", "PicoSpot 45 LED"),
+    ] {
+        let color_choices = vec![
+            choice("Open / White", 0, 10),
+            choice("Red", 11, 21),
+            choice("Orange", 22, 32),
+            choice("Yellow", 33, 43),
+            choice("Green", 44, 54),
+            choice("Blue", 55, 65),
+            choice("Cyan", 66, 76),
+            choice("Purple", 77, 87),
+            choice("Split colours", 88, 175),
+            choice("Colour scroll", 176, 255),
+        ];
+        let gobo_choices = vec![
+            choice("Open", 0, 15),
+            choice("Gobo 1", 16, 31),
+            choice("Gobo 2", 32, 47),
+            choice("Gobo 3", 48, 63),
+            choice("Gobo 4", 64, 79),
+            choice("Gobo 5", 80, 95),
+            choice("Gobo 6", 96, 111),
+            choice("Gobo 7", 112, 124),
+            choice("Gobo shake", 125, 249),
+            choice("Gobo scroll", 250, 255),
+        ];
+        out.push(def(
+            &format!("fungeneration.{slug}.5ch"),
+            "Fun Generation",
+            name,
+            "5ch",
+            "Moving Light",
+            5,
+            vec![
+                attr_default("pan", FeatureGroup::Position, 0, 127),
+                attr_default("tilt", FeatureGroup::Position, 1, 127),
+                attr("pan_tilt_speed", FeatureGroup::Other, 2),
+                attr_choices("color_wheel", FeatureGroup::ColorWheel, 3, 0, color_choices.clone()),
+                attr("dimmer", FeatureGroup::Dimmer, 4),
+            ],
+        ));
+        let mut a9 = pan_tilt(0, 2, 1, 3);
+        a9.extend([
+            attr("pan_tilt_speed", FeatureGroup::Other, 4),
+            attr_choices("color_wheel", FeatureGroup::ColorWheel, 5, 0, color_choices.clone()),
+            attr_choices("gobo", FeatureGroup::Gobo, 6, 0, gobo_choices.clone()),
+            attr("dimmer", FeatureGroup::Dimmer, 7),
+            attr("strobe", FeatureGroup::Beam, 8),
+        ]);
+        out.push(def(
+            &format!("fungeneration.{slug}.9ch"),
+            "Fun Generation",
+            name,
+            "9ch",
+            "Moving Light",
+            9,
+            a9,
+        ));
+        let mut a11 = pan_tilt(0, 2, 1, 3);
+        a11.extend([
+            attr("pan_tilt_speed", FeatureGroup::Other, 4),
+            attr_choices("color_wheel", FeatureGroup::ColorWheel, 5, 0, color_choices),
+            attr_choices("gobo", FeatureGroup::Gobo, 6, 0, gobo_choices),
+            attr("dimmer", FeatureGroup::Dimmer, 7),
+            attr("strobe", FeatureGroup::Beam, 8),
+            attr_choices(
+                "program",
+                FeatureGroup::Other,
+                9,
+                0,
+                vec![
+                    choice("No function", 0, 49),
+                    choice("White", 50, 59),
+                    choice("Programme 1", 140, 149),
+                    choice("Programme 2", 150, 159),
+                    choice("Programme 3", 160, 169),
+                    choice("Programme 4", 170, 179),
+                    choice("Programme 5", 180, 189),
+                    choice("Programme 6", 190, 199),
+                    choice("Programme 7", 200, 209),
+                    choice("Sound", 250, 255),
+                ],
+            ),
+            attr("program_speed", FeatureGroup::Other, 10),
+        ]);
+        out.push(def(
+            &format!("fungeneration.{slug}.11ch"),
+            "Fun Generation",
+            name,
+            "11ch",
+            "Moving Light",
+            11,
+            a11,
+        ));
+    }
+    out
 }
 
 // ---------------------------------------------------------------------------
@@ -1270,6 +1369,80 @@ fn stairville_fixtures() -> Vec<FixtureDefinition> {
                     ]
                 })
                 .collect(),
+        ),
+        // Flood TRI Panel 7x3W RGB — 3 / 4 / 8ch (manual)
+        def(
+            "stairville.flood_tri_panel.3ch",
+            "Stairville",
+            "Flood TRI Panel 7x3W",
+            "3ch",
+            "LED",
+            3,
+            vec![
+                attr("red", FeatureGroup::Color, 0),
+                attr("green", FeatureGroup::Color, 1),
+                attr("blue", FeatureGroup::Color, 2),
+            ],
+        ),
+        def(
+            "stairville.flood_tri_panel.4ch",
+            "Stairville",
+            "Flood TRI Panel 7x3W",
+            "4ch",
+            "LED",
+            4,
+            vec![
+                attr("dimmer", FeatureGroup::Dimmer, 0),
+                attr("red", FeatureGroup::Color, 1),
+                attr("green", FeatureGroup::Color, 2),
+                attr("blue", FeatureGroup::Color, 3),
+            ],
+        ),
+        def(
+            "stairville.flood_tri_panel.8ch",
+            "Stairville",
+            "Flood TRI Panel 7x3W",
+            "8ch",
+            "LED",
+            8,
+            vec![
+                attr("dimmer", FeatureGroup::Dimmer, 0),
+                attr("red", FeatureGroup::Color, 1),
+                attr("green", FeatureGroup::Color, 2),
+                attr("blue", FeatureGroup::Color, 3),
+                attr("strobe", FeatureGroup::Beam, 4),
+                attr_choices(
+                    "mode",
+                    FeatureGroup::Other,
+                    5,
+                    0,
+                    vec![
+                        choice("RGB mix", 0, 0),
+                        choice("Fixed colour", 1, 24),
+                        choice("Colour fade all", 25, 49),
+                        choice("Colour fade 3", 50, 74),
+                        choice("Colour jump all", 75, 99),
+                        choice("Colour jump 3", 100, 124),
+                        choice("Random 1", 125, 149),
+                        choice("Random 2", 150, 174),
+                        choice("Red fade", 175, 199),
+                        choice("Green fade", 200, 224),
+                        choice("Blue fade", 225, 249),
+                        choice("Sound", 250, 255),
+                    ],
+                ),
+                attr("device_id", FeatureGroup::Other, 6),
+                attr_choices(
+                    "dimmer_curve",
+                    FeatureGroup::Other,
+                    7,
+                    0,
+                    vec![
+                        choice("Fast response", 0, 250),
+                        choice("Delayed response", 251, 255),
+                    ],
+                ),
+            ],
         ),
     ]
 }

@@ -5,6 +5,9 @@ pub mod engine;
 pub mod protocol;
 pub mod showfile;
 pub mod streamdeck;
+pub mod streamdeck_icons;
+pub mod webremote;
+pub mod display;
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -15,6 +18,7 @@ use tauri::Manager;
 use crate::engine::ShowEngine;
 use crate::protocol::OutputRunner;
 use crate::streamdeck::StreamDeckController;
+use crate::webremote::WebRemoteServer;
 
 pub type SharedEngine = Arc<RwLock<ShowEngine>>;
 
@@ -27,9 +31,12 @@ pub fn run() {
             let engine = Arc::new(RwLock::new(ShowEngine::new_with_builtin_library()));
             let output = OutputRunner::spawn(engine.clone(), Duration::from_millis(25));
             let deck = Arc::new(StreamDeckController::new());
+            deck.start_auto_connect_watcher(app.handle().clone(), engine.clone());
+            let webremote = Arc::new(WebRemoteServer::new(8080));
             app.manage(engine);
             app.manage(output);
             app.manage(deck);
+            app.manage(webremote);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -58,6 +65,7 @@ pub fn run() {
             commands::playback_back,
             commands::set_output_config,
             commands::set_output_enabled,
+            commands::set_show_name,
             commands::new_show,
             commands::save_show,
             commands::load_show,
@@ -69,6 +77,13 @@ pub fn run() {
             commands::set_streamdeck_mappings,
             commands::assign_streamdeck_key,
             commands::fire_cue,
+            commands::get_webremote_status,
+            commands::start_webremote,
+            commands::stop_webremote,
+            display::list_monitors,
+            display::open_external_display,
+            display::close_external_display,
+            display::is_external_display_open,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

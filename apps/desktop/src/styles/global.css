@@ -125,3 +125,23 @@ input[type="range"] {
 .mono {
   font-family: var(--font-mono);
 }
+
+html.touch-mode button {
+  min-height: 44px;
+  padding: 0.5rem 0.85rem;
+}
+
+html.touch-mode input[type="text"],
+html.touch-mode input[type="number"] {
+  min-height: 44px;
+  padding: 0.55rem 0.65rem;
+  font-size: 1rem;
+}
+
+html.touch-mode input[type="range"] {
+  min-height: 36px;
+}
+
+html.touch-mode .touch-layout button {
+  min-height: 44px;
+}
