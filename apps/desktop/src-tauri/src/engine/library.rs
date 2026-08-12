@@ -616,83 +616,64 @@ fn laserworld_model(slug: &str, name: &str) -> Vec<FixtureDefinition> {
     ]
 }
 
-/// Laserworld EL-230RGB / EL-230RGB MK2 — native 9ch DMX (manual).
-fn laserworld_el230_attrs() -> Vec<AttributeDef> {
+/// Laserworld EL-230RGB / EL-230RGB MK2 — native 12ch DMX (manual).
+fn laserworld_el230_12ch_attrs() -> Vec<AttributeDef> {
     vec![
         attr_choices(
             "mode",
             FeatureGroup::Other,
             0,
-            0,
+            210,
             vec![
-                choice("Off / Blackout", 0, 49),
-                choice("Sound", 50, 99),
-                choice("Auto", 100, 149),
-                choice("Static Pattern", 150, 199),
-                choice("Dynamic Pattern", 200, 255),
+                choice("Laser Off", 0, 69),
+                choice("Music Mode", 70, 139),
+                choice("Auto Mode", 140, 209),
+                choice("DMX Mode", 210, 255),
             ],
         ),
         attr_choices("pattern", FeatureGroup::Other, 1, 0, pattern_choices(50)),
-        attr_default("x", FeatureGroup::Position, 2, 127),
-        attr_default("y", FeatureGroup::Position, 3, 127),
-        attr("scan_speed", FeatureGroup::Other, 4),
-        attr("pattern_speed", FeatureGroup::Other, 5),
+        attr("strobe", FeatureGroup::Beam, 2),
+        attr("point_speed", FeatureGroup::Other, 3),
+        attr_default("x", FeatureGroup::Position, 4, 127),
+        attr_default("y", FeatureGroup::Position, 5, 127),
         attr_default("zoom", FeatureGroup::Beam, 6, 127),
+        attr("color", FeatureGroup::Color, 7),
         attr_choices(
-            "color",
-            FeatureGroup::Color,
-            7,
-            0,
-            vec![
-                choice("Original", 0, 31),
-                choice("Red", 32, 63),
-                choice("Green", 64, 95),
-                choice("Blue", 96, 127),
-                choice("Yellow", 128, 159),
-                choice("Cyan", 160, 191),
-                choice("Magenta", 192, 223),
-                choice("White", 224, 255),
-            ],
-        ),
-        attr_choices(
-            "color_segment",
-            FeatureGroup::Color,
+            "reset",
+            FeatureGroup::Other,
             8,
             0,
             vec![
-                choice("Full / Default", 0, 31),
-                choice("Segment 1", 32, 63),
-                choice("Segment 2", 64, 95),
-                choice("Segment 3", 96, 127),
-                choice("Segment 4", 128, 159),
-                choice("Segment 5", 160, 191),
-                choice("Segment 6", 192, 223),
-                choice("Segment 7", 224, 255),
+                choice("Normal", 0, 200),
+                choice("Reset (>200, brief pulse)", 201, 255),
             ],
         ),
+        attr_default("rotate_x", FeatureGroup::Position, 9, 127),
+        attr_default("rotate_y", FeatureGroup::Position, 10, 127),
+        attr_default("rotate_z", FeatureGroup::Position, 11, 127),
     ]
 }
 
 fn laserworld_fixtures() -> Vec<FixtureDefinition> {
     let mut out = Vec::new();
-    // Entry / Club — EL-230 has a dedicated 9ch map (not ShowNET DJ/Pro)
+    // Entry / Club — EL-230 native 12ch map (not ShowNET DJ/Pro)
     out.push(def(
-        "laserworld.el_230_rgb.9ch",
+        "laserworld.el_230_rgb.12ch",
         "Laserworld",
         "EL-230RGB",
-        "9ch",
+        "12ch",
         "Laser",
-        9,
-        laserworld_el230_attrs(),
+        12,
+        laserworld_el230_12ch_attrs(),
     ));
     out.push(def(
-        "laserworld.el_230_rgb_mk2.9ch",
+        "laserworld.el_230_rgb_mk2.12ch",
         "Laserworld",
         "EL-230RGB MK2",
-        "9ch",
+        "12ch",
         "Laser",
-        9,
-        laserworld_el230_attrs(),
+        12,
+        laserworld_el230_12ch_attrs(),
     ));
     out.extend(laserworld_model("el_200_rgb", "EL-200RGB"));
     out.extend(laserworld_model("el_400_rgb", "EL-400RGB"));

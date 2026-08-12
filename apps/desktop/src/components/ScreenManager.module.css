@@ -1,0 +1,98 @@
+.root {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.createCard {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  background: var(--bg-0);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.createCard h4 {
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.panelHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.row {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.55rem;
+  background: var(--bg-0);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.rowMain {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr auto auto;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.nameInput {
+  min-width: 0;
+}
+
+.rowActions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.openBadge {
+  font-size: 0.72rem;
+  color: #7dffb0;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.error {
+  color: #ffb4b4;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 720px) {
+  .formGrid,
+  .rowMain {
+    grid-template-columns: 1fr;
+  }
+}

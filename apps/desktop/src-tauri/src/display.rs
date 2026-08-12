@@ -1,5 +1,7 @@
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
+const SCREEN_PREFIX: &str = "screen-";
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MonitorInfo {
@@ -10,6 +12,37 @@ pub struct MonitorInfo {
     pub x: i32,
     pub y: i32,
     pub primary: bool,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OpenScreenWindowOptions {
+    pub window_label: String,
+    pub title: String,
+    pub panel: String,
+    pub monitor_index: Option<usize>,
+    pub fullscreen: Option<bool>,
+}
+
+fn validate_screen_label(label: &str) -> Result<(), String> {
+    if !label.starts_with(SCREEN_PREFIX) {
+        return Err("Screen window label must start with 'screen-'".into());
+    }
+    if label.len() <= SCREEN_PREFIX.len() {
+        return Err("Screen window label is too short".into());
+    }
+    Ok(())
+}
+
+fn encode_query_component(value: &str) -> String {
+    value
+        .chars()
+        .map(|c| match c {
+            'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' => c.to_string(),
+            ' ' => "%20".into(),
+            _ => format!("%{:02X}", c as u32),
+        })
+        .collect()
 }
 
 #[tauri::command]
@@ -45,26 +78,32 @@ pub fn list_monitors(app: AppHandle) -> Result<Vec<MonitorInfo>, String> {
 }
 
 #[tauri::command]
-pub async fn open_external_display(
+pub async fn open_screen_window(
     app: AppHandle,
-    monitor_index: Option<usize>,
-    fullscreen: Option<bool>,
+    options: OpenScreenWindowOptions,
 ) -> Result<(), String> {
-    if app.get_webview_window("external-display").is_some() {
+    validate_screen_label(&options.window_label)?;
+    if app.get_webview_window(&options.window_label).is_some() {
         return Ok(());
     }
 
+    let url = format!(
+        "external.html?panel={}&title={}",
+        encode_query_component(&options.panel),
+        encode_query_component(&options.title)
+    );
+
     let mut builder = WebviewWindowBuilder::new(
         &app,
-        "external-display",
-        WebviewUrl::App("external.html".into()),
+        &options.window_label,
+        WebviewUrl::App(url.into()),
     )
-    .title("OpenLightController — External Display")
+    .title(format!("OpenLightController — {}", options.title))
     .inner_size(1280.0, 720.0)
     .resizable(true)
     .decorations(true);
 
-    if let Some(idx) = monitor_index {
+    if let Some(idx) = options.monitor_index {
         if let Ok(monitors) = app.available_monitors() {
             if let Some(monitor) = monitors.into_iter().nth(idx) {
                 let pos = monitor.position();
@@ -72,12 +111,12 @@ pub async fn open_external_display(
                 builder = builder
                     .position(pos.x as f64, pos.y as f64)
                     .inner_size(size.width as f64, size.height as f64);
-                if fullscreen.unwrap_or(true) {
+                if options.fullscreen.unwrap_or(true) {
                     builder = builder.fullscreen(true);
                 }
             }
         }
-    } else if fullscreen.unwrap_or(false) {
+    } else if options.fullscreen.unwrap_or(false) {
         builder = builder.fullscreen(true);
     }
 
@@ -86,14 +125,24 @@ pub async fn open_external_display(
 }
 
 #[tauri::command]
-pub async fn close_external_display(app: AppHandle) -> Result<(), String> {
-    if let Some(window) = app.get_webview_window("external-display") {
+pub async fn close_screen_window(app: AppHandle, window_label: String) -> Result<(), String> {
+    validate_screen_label(&window_label)?;
+    if let Some(window) = app.get_webview_window(&window_label) {
         window.close().map_err(|e| e.to_string())?;
     }
     Ok(())
 }
 
 #[tauri::command]
-pub fn is_external_display_open(app: AppHandle) -> bool {
-    app.get_webview_window("external-display").is_some()
+pub fn list_open_screen_windows(app: AppHandle) -> Vec<String> {
+    app.webview_windows()
+        .into_keys()
+        .filter(|label| label.starts_with(SCREEN_PREFIX))
+        .collect()
+}
+
+#[tauri::command]
+pub fn is_screen_window_open(app: AppHandle, window_label: String) -> bool {
+    validate_screen_label(&window_label).is_ok()
+        && app.get_webview_window(&window_label).is_some()
 }

@@ -81,9 +81,10 @@ pub fn run() {
             commands::start_webremote,
             commands::stop_webremote,
             display::list_monitors,
-            display::open_external_display,
-            display::close_external_display,
-            display::is_external_display_open,
+            display::open_screen_window,
+            display::close_screen_window,
+            display::list_open_screen_windows,
+            display::is_screen_window_open,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

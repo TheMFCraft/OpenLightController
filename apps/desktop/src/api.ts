@@ -3,6 +3,7 @@ import type {
   DeckKeyMapping,
   FeatureGroup,
   MonitorInfo,
+  OpenScreenWindowOptions,
   OutputConfig,
   ShowState,
   StreamDeckDeviceInfo,
@@ -87,11 +88,11 @@ export const api = {
   startWebRemote: (port: number) => invoke<WebRemoteStatus>("start_webremote", { port }),
   stopWebRemote: () => invoke<WebRemoteStatus>("stop_webremote"),
   listMonitors: () => invoke<MonitorInfo[]>("list_monitors"),
-  openExternalDisplay: (monitorIndex: number, fullscreen?: boolean) =>
-    invoke<void>("open_external_display", {
-      monitorIndex,
-      fullscreen: fullscreen ?? null,
-    }),
-  closeExternalDisplay: () => invoke<void>("close_external_display"),
-  isExternalDisplayOpen: () => invoke<boolean>("is_external_display_open"),
+  openScreenWindow: (options: OpenScreenWindowOptions) =>
+    invoke<void>("open_screen_window", { options }),
+  closeScreenWindow: (windowLabel: string) =>
+    invoke<void>("close_screen_window", { windowLabel }),
+  listOpenScreenWindows: () => invoke<string[]>("list_open_screen_windows"),
+  isScreenWindowOpen: (windowLabel: string) =>
+    invoke<boolean>("is_screen_window_open", { windowLabel }),
 };

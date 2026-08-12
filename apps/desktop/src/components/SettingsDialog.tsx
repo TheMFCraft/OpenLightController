@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { usePreferencesStore } from "../preferencesStore";
-import type { MonitorInfo, WebRemoteStatus } from "../types";
+import { ScreenManager } from "./ScreenManager";
+import type { WebRemoteStatus } from "../types";
 import styles from "./SettingsDialog.module.css";
 
 interface Props {
@@ -18,17 +19,12 @@ export function SettingsDialog({ open, onClose }: Props) {
   const touchMode = usePreferencesStore((s) => s.touchMode);
   const onScreenKeyboard = usePreferencesStore((s) => s.onScreenKeyboard);
   const webRemotePort = usePreferencesStore((s) => s.webRemotePort);
-  const externalFullscreen = usePreferencesStore((s) => s.externalFullscreen);
   const setTouchMode = usePreferencesStore((s) => s.setTouchMode);
   const setOnScreenKeyboard = usePreferencesStore((s) => s.setOnScreenKeyboard);
   const setWebRemotePort = usePreferencesStore((s) => s.setWebRemotePort);
-  const setExternalFullscreen = usePreferencesStore((s) => s.setExternalFullscreen);
 
   const [portDraft, setPortDraft] = useState(String(webRemotePort));
   const [remoteStatus, setRemoteStatus] = useState<WebRemoteStatus | null>(null);
-  const [monitors, setMonitors] = useState<MonitorInfo[]>([]);
-  const [externalOpen, setExternalOpen] = useState(false);
-  const [selectedMonitor, setSelectedMonitor] = useState(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -38,18 +34,8 @@ export function SettingsDialog({ open, onClose }: Props) {
     setMessage(null);
     void (async () => {
       try {
-        const [remote, mons, ext] = await Promise.all([
-          api.getWebRemoteStatus(),
-          api.listMonitors(),
-          api.isExternalDisplayOpen(),
-        ]);
+        const remote = await api.getWebRemoteStatus();
         setRemoteStatus(remote);
-        setMonitors(mons);
-        setExternalOpen(ext);
-        if (mons.length) {
-          const secondary = mons.find((m) => !m.primary);
-          setSelectedMonitor(secondary?.index ?? mons[0].index);
-        }
       } catch (e) {
         setMessage(String(e));
       }
@@ -89,32 +75,6 @@ export function SettingsDialog({ open, onClose }: Props) {
     }
   };
 
-  const openExternal = async () => {
-    setBusy(true);
-    setMessage(null);
-    try {
-      await api.openExternalDisplay(selectedMonitor, externalFullscreen);
-      setExternalOpen(true);
-    } catch (e) {
-      setMessage(String(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const closeExternal = async () => {
-    setBusy(true);
-    setMessage(null);
-    try {
-      await api.closeExternalDisplay();
-      setExternalOpen(false);
-    } catch (e) {
-      setMessage(String(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const url = webRemoteUrl(remoteStatus);
 
   return (
@@ -149,51 +109,8 @@ export function SettingsDialog({ open, onClose }: Props) {
         </section>
 
         <section className={styles.section}>
-          <h3>External Display</h3>
-          <p className="muted">
-            Open a second window for playbacks and cues — e.g. on a second monitor like dot2 onPC
-            WebRemote / screen layouts.
-          </p>
-          <label className={styles.field}>
-            Monitor
-            <select
-              value={selectedMonitor}
-              onChange={(e) => setSelectedMonitor(Number(e.target.value))}
-              disabled={externalOpen || !monitors.length}
-            >
-              {monitors.map((m) => (
-                <option key={m.index} value={m.index}>
-                  {m.name || `Monitor ${m.index + 1}`} — {m.width}×{m.height}
-                  {m.primary ? " (primary)" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={styles.checkRow}>
-            <input
-              type="checkbox"
-              checked={externalFullscreen}
-              disabled={externalOpen}
-              onChange={(e) => setExternalFullscreen(e.target.checked)}
-            />
-            Fullscreen on selected monitor
-          </label>
-          <div className={styles.row}>
-            {externalOpen ? (
-              <button type="button" disabled={busy} onClick={() => void closeExternal()}>
-                Close External Display
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="primary"
-                disabled={busy || !monitors.length}
-                onClick={() => void openExternal()}
-              >
-                Open External Display
-              </button>
-            )}
-          </div>
+          <h3>Screen Layouts</h3>
+          <ScreenManager />
         </section>
 
         <section className={styles.section}>

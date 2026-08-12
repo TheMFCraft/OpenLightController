@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "screens",
+  "description": "Capability for configurable external screen windows",
+  "windows": ["screen-*"],
+  "permissions": [
+    "core:default",
+    "opener:default"
+  ]
+}

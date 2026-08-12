@@ -181,3 +181,13 @@ export interface MonitorInfo {
   y: number;
   primary: boolean;
 }
+
+export type ScreenPanel = "playbacks" | "cues" | "dmx_output" | "status";
+
+export interface OpenScreenWindowOptions {
+  windowLabel: string;
+  title: string;
+  panel: ScreenPanel;
+  monitorIndex?: number | null;
+  fullscreen?: boolean;
+}

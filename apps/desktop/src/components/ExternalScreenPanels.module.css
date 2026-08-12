@@ -1,0 +1,159 @@
+.header,
+.headerCompact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--line);
+}
+
+.header h1,
+.headerCompact h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.headerCompact h1 {
+  font-size: 1.05rem;
+}
+
+.clock {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.playbacks {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.playback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-height: 0;
+}
+
+.pbLabel {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playback input[type="range"] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  flex: 1;
+  min-height: 120px;
+  width: 1.6rem;
+}
+
+.pbButtons {
+  display: flex;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.pbButtons button {
+  flex: 1;
+  min-height: 48px;
+}
+
+.cues {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+}
+
+.cueGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.45rem;
+  overflow: auto;
+  flex: 1;
+}
+
+.cueBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  min-height: 56px;
+  text-align: left;
+}
+
+.cueList {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.statusPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.statusPanel h2 {
+  margin: 0;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.statusClock {
+  font-family: var(--font-mono);
+  font-size: clamp(3rem, 12vw, 6rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.statusActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.statusActions button {
+  min-height: 64px;
+  min-width: 180px;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 1200px) {
+  .playbacks {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .playbacks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -6,13 +6,15 @@
 
 <p align="center">
   <strong>Cross-platform lighting console</strong> for live shows — fixtures, cues, playbacks,<br />
-  Art-Net / sACN output, and Stream Deck control.
+  Art-Net / sACN output, WebRemote, multi-monitor layouts, and Stream Deck control.
 </p>
 
 <p align="center">
   <a href="#features">Features</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#patch--fixture-library">Patch</a> ·
+  <a href="#screen-layouts">Screens</a> ·
+  <a href="#webremote">WebRemote</a> ·
   <a href="#stream-deck">Stream Deck</a> ·
   <a href="#build">Build</a>
 </p>
@@ -32,13 +34,16 @@ It runs natively on **Windows**, **macOS**, and **Linux** via [Tauri 2](https://
 | **Programmer** | Live attributes, HSV color wheel, groups & presets |
 | **Cues** | Tracking cue lists with fade times |
 | **Playbacks** | 8 faders, HTP dimmer / LTP other, programmer priority |
-| **Network** | Art-Net + sACN (E1.31), 4 universes |
-| **Stream Deck** | Auto-connects Elgato Stream Deck, assign cues to keys |
-| **Showfile** | Save / load JSON shows |
+| **Network** | Art-Net + sACN (E1.31), 4 universes, configurable Art-Net target IP |
+| **Screen layouts** | Unlimited external windows — each monitor gets its own panel (Playbacks, Cues, DMX Output, Status) |
+| **WebRemote** | Browser control over LAN (playbacks, cues, blackout, output) |
+| **Touch UI** | Optional touch mode + on-screen keyboard for text fields |
+| **Stream Deck** | Auto-connects Elgato Stream Deck, assign actions / icons / labels to keys |
+| **Showfile** | Save / load JSON shows, auto-save, editable show name |
 
 ### Fixture library (excerpt)
 
-- **Laserworld** — EL-230RGB (9ch), EL / CS / DS / PL / tarm / Clubmax / CUBE (DJ + Professional modes)
+- **Laserworld** — EL-230RGB (12ch), EL / CS / DS / PL / tarm / Clubmax / CUBE (DJ + Professional modes)
 - **Fun Generation** — Laser Derby, Mini Laser, PicoSpot 20/45, LED Pot, UV, Strobe
 - **Stairville** — DJLase, Flood TRI Panel, LED PAR, MH movers, fog, LED bars
 - **Generic** — Dimmer packs, RGB(W/A/UV), COB, bars/pixels, strobes, movers (spot/wash/beam), lasers, atmos
@@ -77,6 +82,47 @@ npm run dev
 
 Example **LED Wash** footprint (7ch): Dimmer · Shutter · R · G · B · W · *(ch7 unbound)*
 
+## Screen layouts
+
+Open **Settings → Screen Layouts** to create **unlimited external windows** — similar to dot2 onPC / grandMA screen layouts.
+
+Each screen has:
+
+- A **name** and **panel type**
+- An optional **monitor** assignment (multi-monitor setups)
+- Optional **fullscreen** on that monitor
+
+| Panel | Purpose |
+|-------|---------|
+| **Playbacks** | 8 playback faders with GO / Back |
+| **Cues** | Fire cues from all cue lists |
+| **DMX Output** | Live view of all 512 channels (0–255) per universe |
+| **Status & Master** | Large clock, blackout, and output toggles (touch-friendly) |
+
+Example setup:
+
+- Monitor 2 → DMX Output  
+- Monitor 3 → Cues  
+- Monitor 4 → Playbacks  
+- Monitor 5 → Status & Master  
+
+Screen definitions are saved locally. To change a panel, close the window, edit the screen, and open it again.
+
+## WebRemote
+
+1. Open **Settings → WebRemote**
+2. Set a port (default **8080**) and click **Start WebRemote**
+3. Open the shown URL on any phone / tablet / laptop on the same LAN
+
+WebRemote supports playbacks, cue fire, blackout, output toggle, and clear programmer — with live state polling.
+
+## Touch mode
+
+Under **Settings → Touch & Keyboard**:
+
+- **Touch mode** — larger buttons and touch-friendly input targets
+- **On-screen keyboard** — virtual keyboard for text fields when touch mode is on
+
 ## Stream Deck
 
 1. Quit the official Elgato Stream Deck software (it locks HID access)
@@ -91,8 +137,10 @@ On Linux you may need HID udev rules (see the [`elgato-streamdeck`](https://crat
 ## Network / DMX
 
 - Enable **Art-Net** and/or **sACN** under **Network**
+- Set **Art-Net Target IP** for unicast to a node (disable broadcast if needed)
 - Map internal universes → Art-Net / sACN universes
 - Toggle **Output On**
+- Use a **DMX Output** screen (Settings → Screen Layouts) to monitor all channel values live
 
 Verify with [QLC+](https://www.qlcplus.org/), an Art-Net monitor, or sACN View.
 
@@ -159,11 +207,12 @@ OpenLightController/
 - **App shell:** Tauri 2  
 - **UI:** React 19, TypeScript, Vite, Zustand  
 - **Engine:** Rust (patch, programmer, tracking, merge, protocols)  
+- **Remote:** Axum HTTP server (WebRemote)  
 - **HID:** [`elgato-streamdeck`](https://crates.io/crates/elgato-streamdeck)
 
 ## Roadmap (not in MVP)
 
-Effects engine · GDTF import · MIDI / OSC · RDM · 3D visualizer · multi-user session
+Effects engine · GDTF import · MIDI / OSC · RDM · 3D visualizer · multi-user session · screen layout presets on show load
 
 ## Contributing
 
