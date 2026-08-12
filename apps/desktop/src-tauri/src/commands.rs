@@ -142,16 +142,46 @@ pub fn store_preset(
     engine: State<'_, SharedEngine>,
     name: String,
     feature_group: FeatureGroup,
+    covers_all: Option<bool>,
 ) -> Result<ShowStateDto, String> {
     let mut eng = engine.write();
-    eng.store_preset(name, feature_group).map_err(map_err)?;
+    eng.store_preset(name, feature_group, covers_all.unwrap_or(false))
+        .map_err(map_err)?;
     Ok(eng.state_dto())
 }
 
 #[tauri::command]
-pub fn apply_preset(engine: State<'_, SharedEngine>, id: Uuid) -> Result<ShowStateDto, String> {
+pub fn update_preset(
+    engine: State<'_, SharedEngine>,
+    id: Uuid,
+    name: Option<String>,
+    refresh_from_programmer: Option<bool>,
+) -> Result<ShowStateDto, String> {
     let mut eng = engine.write();
-    eng.apply_preset(id).map_err(map_err)?;
+    eng.update_preset(id, name, refresh_from_programmer.unwrap_or(false))
+        .map_err(map_err)?;
+    Ok(eng.state_dto())
+}
+
+#[tauri::command]
+pub fn duplicate_preset(
+    engine: State<'_, SharedEngine>,
+    id: Uuid,
+    name: Option<String>,
+) -> Result<ShowStateDto, String> {
+    let mut eng = engine.write();
+    eng.duplicate_preset(id, name).map_err(map_err)?;
+    Ok(eng.state_dto())
+}
+
+#[tauri::command]
+pub fn apply_preset(
+    engine: State<'_, SharedEngine>,
+    id: Uuid,
+    replace: Option<bool>,
+) -> Result<ShowStateDto, String> {
+    let mut eng = engine.write();
+    eng.apply_preset(id, replace.unwrap_or(false)).map_err(map_err)?;
     Ok(eng.state_dto())
 }
 

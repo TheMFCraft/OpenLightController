@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { AttributePanel } from "./components/AttributePanel";
 import { CueListPanel } from "./components/CueListPanel";
 import { FixtureGrid } from "./components/FixtureGrid";
-import { GroupPresetPanel } from "./components/GroupPresetPanel";
+import { GroupPanel } from "./components/GroupPanel";
+import { PresetPanel } from "./components/PresetPanel";
 import { KeyboardProvider } from "./components/KeyboardContext";
 import { NetworkDialog } from "./components/NetworkDialog";
 import { PatchDialog } from "./components/PatchDialog";
@@ -152,12 +153,15 @@ export default function App() {
         ) : (
           <>
             <main className={styles.main}>
-              <div style={{ display: "grid", gridTemplateRows: "1fr 1fr", gap: "0.55rem", minHeight: 0 }}>
+              <div style={{ display: "grid", gridTemplateRows: "1fr auto", gap: "0.55rem", minHeight: 0 }}>
                 <FixtureGrid />
-                <GroupPresetPanel />
+                <GroupPanel />
               </div>
               <AttributePanel />
-              <CueListPanel />
+              <div style={{ display: "grid", gridTemplateRows: "1fr 1fr", gap: "0.55rem", minHeight: 0 }}>
+                <PresetPanel />
+                <CueListPanel />
+              </div>
             </main>
             <PlaybackBar />
           </>

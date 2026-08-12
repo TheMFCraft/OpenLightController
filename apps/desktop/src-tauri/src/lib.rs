@@ -14,6 +14,7 @@ use std::time::Duration;
 
 use parking_lot::RwLock;
 use tauri::Manager;
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 
 use crate::engine::ShowEngine;
 use crate::protocol::OutputRunner;
@@ -37,6 +38,35 @@ pub fn run() {
             app.manage(output);
             app.manage(deck);
             app.manage(webremote);
+
+            if let Some(main_win) = app.get_webview_window("main") {
+                let app_handle = app.handle().clone();
+                main_win.on_window_event(move |event| {
+                    match event {
+                        tauri::WindowEvent::CloseRequested { api, .. } => {
+                            let confirmed = app_handle
+                                .dialog()
+                                .message(
+                                    "Close OpenLightController? All external screen windows will close too.",
+                                )
+                                .title("OpenLightController")
+                                .kind(MessageDialogKind::Warning)
+                                .buttons(MessageDialogButtons::OkCancel)
+                                .blocking_show();
+                            if !confirmed {
+                                api.prevent_close();
+                                return;
+                            }
+                            display::close_all_screen_windows(&app_handle);
+                        }
+                        tauri::WindowEvent::Destroyed => {
+                            app_handle.exit(0);
+                        }
+                        _ => {}
+                    }
+                });
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -54,6 +84,8 @@ pub fn run() {
             commands::store_group,
             commands::delete_group,
             commands::store_preset,
+            commands::update_preset,
+            commands::duplicate_preset,
             commands::apply_preset,
             commands::delete_preset,
             commands::store_cue,

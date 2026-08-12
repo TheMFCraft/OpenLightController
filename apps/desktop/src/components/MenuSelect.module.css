@@ -1,0 +1,51 @@
+.trigger {
+  width: 100%;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.55rem;
+  background: var(--bg-0);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  text-align: left;
+}
+
+.triggerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.menu {
+  position: fixed;
+  z-index: 100;
+  display: grid;
+  gap: 0.2rem;
+  max-height: min(280px, 40vh);
+  overflow: auto;
+  padding: 0.35rem;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 45%);
+}
+
+.option,
+.optionActive {
+  width: 100%;
+  text-align: left;
+  min-height: 36px;
+  padding: 0.45rem 0.55rem;
+}
+
+.optionActive {
+  background: var(--selected);
+  border-color: #3d6a55;
+}

@@ -84,8 +84,12 @@ pub struct Group {
 #[serde(rename_all = "camelCase")]
 pub struct Preset {
     pub id: Uuid,
+    #[serde(default)]
+    pub number: f32,
     pub name: String,
     pub feature_group: FeatureGroup,
+    #[serde(default)]
+    pub covers_all: bool,
     /// attribute name -> 0.0..=1.0
     pub values: BTreeMap<String, f32>,
 }

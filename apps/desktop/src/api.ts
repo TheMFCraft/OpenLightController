@@ -44,9 +44,18 @@ export const api = {
   clearProgrammerAll: () => invoke<ShowState>("clear_programmer_all"),
   storeGroup: (name: string) => invoke<ShowState>("store_group", { name }),
   deleteGroup: (id: string) => invoke<ShowState>("delete_group", { id }),
-  storePreset: (name: string, featureGroup: FeatureGroup) =>
-    invoke<ShowState>("store_preset", { name, featureGroup }),
-  applyPreset: (id: string) => invoke<ShowState>("apply_preset", { id }),
+  storePreset: (name: string, featureGroup: FeatureGroup, coversAll?: boolean) =>
+    invoke<ShowState>("store_preset", { name, featureGroup, coversAll: coversAll ?? null }),
+  updatePreset: (id: string, name: string | null, refreshFromProgrammer?: boolean) =>
+    invoke<ShowState>("update_preset", {
+      id,
+      name,
+      refreshFromProgrammer: refreshFromProgrammer ?? null,
+    }),
+  duplicatePreset: (id: string, name?: string) =>
+    invoke<ShowState>("duplicate_preset", { id, name: name ?? null }),
+  applyPreset: (id: string, replace?: boolean) =>
+    invoke<ShowState>("apply_preset", { id, replace: replace ?? null }),
   deletePreset: (id: string) => invoke<ShowState>("delete_preset", { id }),
   createCueList: (name: string) => invoke<ShowState>("create_cue_list", { name }),
   storeCue: (cueListId: string, name: string, fadeMs: number) =>

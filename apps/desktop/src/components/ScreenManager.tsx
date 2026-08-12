@@ -1,18 +1,69 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import {
+  canUseFullscreenOnMonitor,
+  normalizeScreenMonitor,
+  primaryMonitorWarning,
+  selectableMonitors,
+  singleMonitorHint,
+} from "../screenMonitorUtils";
+import { MenuSelect } from "./MenuSelect";
 import { SCREEN_PANELS } from "../screenPanels";
 import { screenWindowLabel, useScreenStore, type ScreenDefinition } from "../screenStore";
 import type { MonitorInfo, ScreenPanel } from "../types";
 import styles from "./ScreenManager.module.css";
 
+const PANEL_OPTIONS = SCREEN_PANELS.map((p) => ({ value: p.id, label: p.label }));
+
+function monitorOptions(monitors: MonitorInfo[]) {
+  const secondary = selectableMonitors(monitors);
+  if (secondary.length === 0) {
+    return [{ value: "", label: "Windowed on this display" }];
+  }
+  return [
+    { value: "", label: "Default position" },
+    ...secondary.map((m) => ({
+      value: String(m.index),
+      label: `${m.name} — ${m.width}×${m.height}`,
+    })),
+  ];
+}
+
+function monitorOptionsShort(monitors: MonitorInfo[]) {
+  const secondary = selectableMonitors(monitors);
+  if (secondary.length === 0) {
+    return [{ value: "", label: "Windowed" }];
+  }
+  return [
+    { value: "", label: "Default" },
+    ...secondary.map((m) => ({
+      value: String(m.index),
+      label: m.name || `Monitor ${m.index + 1}`,
+    })),
+  ];
+}
+
 function emptyDraft(monitors: MonitorInfo[]): Omit<ScreenDefinition, "id"> {
   const secondary = monitors.find((m) => !m.primary);
-  return {
+  const monitorIndex = secondary?.index ?? null;
+  return normalizeScreenMonitor(monitors, {
     name: "New Screen",
     panel: "dmx_output",
-    monitorIndex: secondary?.index ?? monitors[0]?.index ?? null,
-    fullscreen: true,
-  };
+    monitorIndex,
+    fullscreen: monitorIndex != null && canUseFullscreenOnMonitor(monitors, monitorIndex),
+  });
+}
+
+function applyMonitorSelection(
+  monitors: MonitorInfo[],
+  current: Omit<ScreenDefinition, "id"> | ScreenDefinition,
+  monitorIndex: number | null,
+) {
+  const next = { ...current, monitorIndex };
+  if (!canUseFullscreenOnMonitor(monitors, monitorIndex)) {
+    next.fullscreen = false;
+  }
+  return next;
 }
 
 export function ScreenManager() {
@@ -38,6 +89,18 @@ export function ScreenManager() {
         const mons = await api.listMonitors();
         setMonitors(mons);
         setDraft((current) => current ?? emptyDraft(mons));
+        for (const screen of useScreenStore.getState().screens) {
+          const safe = normalizeScreenMonitor(mons, screen);
+          if (
+            safe.monitorIndex !== screen.monitorIndex ||
+            safe.fullscreen !== screen.fullscreen
+          ) {
+            updateScreen(screen.id, {
+              monitorIndex: safe.monitorIndex,
+              fullscreen: safe.fullscreen,
+            });
+          }
+        }
         await refreshOpen();
       } catch (e) {
         setMessage(String(e));
@@ -52,13 +115,20 @@ export function ScreenManager() {
   const openScreen = async (screen: ScreenDefinition) => {
     setBusy(true);
     setMessage(null);
+    const safe = normalizeScreenMonitor(monitors, screen);
+    if (safe.monitorIndex !== screen.monitorIndex || safe.fullscreen !== screen.fullscreen) {
+      updateScreen(screen.id, {
+        monitorIndex: safe.monitorIndex,
+        fullscreen: safe.fullscreen,
+      });
+    }
     try {
       await api.openScreenWindow({
-        windowLabel: screenWindowLabel(screen.id),
-        title: screen.name,
-        panel: screen.panel,
-        monitorIndex: screen.monitorIndex,
-        fullscreen: screen.fullscreen,
+        windowLabel: screenWindowLabel(safe.id),
+        title: safe.name,
+        panel: safe.panel,
+        monitorIndex: safe.monitorIndex,
+        fullscreen: safe.fullscreen,
       });
       await refreshOpen();
     } catch (e) {
@@ -84,7 +154,8 @@ export function ScreenManager() {
   const createScreen = async () => {
     if (!draft) return;
     const name = draft.name.trim() || "Screen";
-    const created = addScreen({ ...draft, name });
+    const safe = normalizeScreenMonitor(monitors, { ...draft, name });
+    const created = addScreen(safe);
     setDraft(emptyDraft(monitors));
     await openScreen(created);
   };
@@ -93,8 +164,11 @@ export function ScreenManager() {
     <section className={styles.root}>
       <p className="muted">
         Create unlimited external windows — each with its own panel (Playbacks, Cues, DMX Output,
-        Status). Assign them to any monitor.
+        Status). The main console always stays on the primary display.
       </p>
+      {singleMonitorHint(monitors) ? (
+        <p className={styles.warning}>{singleMonitorHint(monitors)}</p>
+      ) : null}
 
       {draft ? (
         <div className={styles.createCard}>
@@ -110,48 +184,41 @@ export function ScreenManager() {
             </label>
             <label className={styles.field}>
               Panel
-              <select
+              <MenuSelect
                 value={draft.panel}
-                onChange={(e) =>
-                  setDraft({ ...draft, panel: e.target.value as ScreenPanel })
-                }
-              >
-                {SCREEN_PANELS.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
+                ariaLabel="Panel"
+                options={PANEL_OPTIONS}
+                onChange={(panel) => setDraft({ ...draft, panel: panel as ScreenPanel })}
+              />
             </label>
             <label className={styles.field}>
               Monitor
-              <select
-                value={draft.monitorIndex ?? ""}
-                onChange={(e) =>
-                  setDraft({
-                    ...draft,
-                    monitorIndex: e.target.value === "" ? null : Number(e.target.value),
-                  })
+              <MenuSelect
+                value={draft.monitorIndex == null ? "" : String(draft.monitorIndex)}
+                ariaLabel="Monitor"
+                options={monitorOptions(monitors)}
+                onChange={(value) =>
+                  setDraft(applyMonitorSelection(
+                    monitors,
+                    draft,
+                    value === "" ? null : Number(value),
+                  ))
                 }
-              >
-                <option value="">Default position</option>
-                {monitors.map((m) => (
-                  <option key={m.index} value={m.index}>
-                    {m.name} — {m.width}×{m.height}
-                    {m.primary ? " (primary)" : ""}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
             <label className={styles.checkRow}>
               <input
                 type="checkbox"
                 checked={draft.fullscreen}
+                disabled={!canUseFullscreenOnMonitor(monitors, draft.monitorIndex)}
                 onChange={(e) => setDraft({ ...draft, fullscreen: e.target.checked })}
               />
               Fullscreen on monitor
             </label>
           </div>
+          {primaryMonitorWarning(monitors, draft.monitorIndex) ? (
+            <p className={styles.warning}>{primaryMonitorWarning(monitors, draft.monitorIndex)}</p>
+          ) : null}
           <p className={styles.panelHint}>
             {SCREEN_PANELS.find((p) => p.id === draft.panel)?.description}
           </p>
@@ -208,53 +275,53 @@ function ScreenRow({
   onClose: () => void;
   onRemove: () => void;
 }) {
+  const fsAllowed = canUseFullscreenOnMonitor(monitors, screen.monitorIndex);
+  const warning = primaryMonitorWarning(monitors, screen.monitorIndex);
+
   return (
     <div className={styles.row}>
       <div className={styles.rowMain}>
         <input
           className={styles.nameInput}
           value={screen.name}
-          disabled={open}
           onChange={(e) => onChange({ name: e.target.value })}
         />
-        <select
-          value={screen.panel}
-          disabled={open}
-          onChange={(e) => onChange({ panel: e.target.value as ScreenPanel })}
-        >
-          {SCREEN_PANELS.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.label}
-            </option>
-          ))}
-        </select>
-        <select
-          value={screen.monitorIndex ?? ""}
-          disabled={open}
-          onChange={(e) =>
-            onChange({
-              monitorIndex: e.target.value === "" ? null : Number(e.target.value),
-            })
-          }
-        >
-          <option value="">Default</option>
-          {monitors.map((m) => (
-            <option key={m.index} value={m.index}>
-              {m.name}
-            </option>
-          ))}
-        </select>
-        <label className={styles.checkRow}>
+        <div className={styles.selectCell}>
+          <MenuSelect
+            value={screen.panel}
+            ariaLabel="Panel"
+            options={PANEL_OPTIONS}
+            onChange={(panel) => onChange({ panel: panel as ScreenPanel })}
+          />
+        </div>
+        <div className={styles.selectCell}>
+          <MenuSelect
+            value={screen.monitorIndex == null ? "" : String(screen.monitorIndex)}
+            ariaLabel="Monitor"
+            options={monitorOptionsShort(monitors)}
+            onChange={(value) =>
+              onChange(
+                applyMonitorSelection(
+                  monitors,
+                  screen,
+                  value === "" ? null : Number(value),
+                ),
+              )
+            }
+          />
+        </div>
+        <label className={styles.checkRow} title={fsAllowed ? undefined : warning ?? undefined}>
           <input
             type="checkbox"
             checked={screen.fullscreen}
-            disabled={open}
+            disabled={!fsAllowed}
             onChange={(e) => onChange({ fullscreen: e.target.checked })}
           />
           FS
         </label>
-        {open ? <span className={styles.openBadge}>Open</span> : null}
+        {open ? <span className={styles.openBadge}>Open · reopen to apply layout</span> : null}
       </div>
+      {warning ? <p className={styles.warning}>{warning}</p> : null}
       <div className={styles.rowActions}>
         {open ? (
           <button type="button" disabled={busy} onClick={onClose}>

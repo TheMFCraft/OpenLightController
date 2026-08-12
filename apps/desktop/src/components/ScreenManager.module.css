@@ -68,7 +68,8 @@
   align-items: center;
 }
 
-.nameInput {
+.nameInput,
+.selectCell {
   min-width: 0;
 }
 
@@ -79,15 +80,22 @@
 }
 
 .openBadge {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: #7dffb0;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .error {
   color: #ffb4b4;
   font-size: 0.85rem;
+}
+
+.warning {
+  margin: 0;
+  color: #ffd59a;
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 @media (max-width: 720px) {

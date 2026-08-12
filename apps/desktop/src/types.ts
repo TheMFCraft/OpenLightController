@@ -50,8 +50,10 @@ export interface Group {
 
 export interface Preset {
   id: string;
+  number?: number;
   name: string;
   featureGroup: FeatureGroup;
+  coversAll?: boolean;
   values: Record<string, number>;
 }
 

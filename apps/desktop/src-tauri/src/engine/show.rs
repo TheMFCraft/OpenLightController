@@ -289,25 +289,52 @@ impl ShowEngine {
         Ok(())
     }
 
-    pub fn store_preset(
-        &mut self,
-        name: String,
+    fn next_preset_number(&self) -> f32 {
+        self.show
+            .presets
+            .iter()
+            .map(|p| p.number)
+            .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|n| n.floor() + 1.0)
+            .unwrap_or(1.0)
+    }
+
+    fn fixture_has_attribute(&self, fixture_id: Uuid, attr: &str) -> bool {
+        self.show
+            .fixtures
+            .iter()
+            .find(|f| f.id == fixture_id)
+            .and_then(|f| self.definitions.iter().find(|d| d.id == f.definition_id))
+            .map(|d| d.attributes.iter().any(|a| a.name == attr))
+            .unwrap_or(false)
+    }
+
+    fn attribute_feature_group(&self, fixture_id: Uuid, attr: &str) -> Option<FeatureGroup> {
+        self.show
+            .fixtures
+            .iter()
+            .find(|f| f.id == fixture_id)
+            .and_then(|f| self.definitions.iter().find(|d| d.id == f.definition_id))
+            .and_then(|d| d.attributes.iter().find(|a| a.name == attr))
+            .map(|a| a.feature_group.clone())
+    }
+
+    fn collect_preset_values(
+        &self,
         feature_group: FeatureGroup,
-    ) -> Result<Preset, String> {
+        covers_all: bool,
+    ) -> Result<BTreeMap<String, f32>, String> {
         if self.programmer.values.is_empty() {
             return Err("Programmer empty".into());
         }
+        if covers_all {
+            return Ok(self.programmer.values.clone());
+        }
         let mut values = BTreeMap::new();
         for (attr, v) in &self.programmer.values {
-            // keep attributes that belong to feature group for at least one selected fixture
             let keep = self.programmer.selection.iter().any(|fx_id| {
-                self.show
-                    .fixtures
-                    .iter()
-                    .find(|f| f.id == *fx_id)
-                    .and_then(|f| self.definitions.iter().find(|d| d.id == f.definition_id))
-                    .and_then(|d| d.attributes.iter().find(|a| a.name == *attr))
-                    .map(|a| a.feature_group == feature_group)
+                self.attribute_feature_group(*fx_id, attr)
+                    .map(|fg| fg == feature_group)
                     .unwrap_or(false)
             });
             if keep {
@@ -317,17 +344,73 @@ impl ShowEngine {
         if values.is_empty() {
             return Err("No attributes for feature group in programmer".into());
         }
+        Ok(values)
+    }
+
+    pub fn store_preset(
+        &mut self,
+        name: String,
+        feature_group: FeatureGroup,
+        covers_all: bool,
+    ) -> Result<Preset, String> {
+        let values = self.collect_preset_values(feature_group.clone(), covers_all)?;
         let preset = Preset {
             id: Uuid::new_v4(),
+            number: self.next_preset_number(),
             name,
             feature_group,
+            covers_all,
             values,
         };
         self.show.presets.push(preset.clone());
         Ok(preset)
     }
 
-    pub fn apply_preset(&mut self, id: Uuid) -> Result<(), String> {
+    pub fn update_preset(
+        &mut self,
+        id: Uuid,
+        name: Option<String>,
+        refresh_from_programmer: bool,
+    ) -> Result<Preset, String> {
+        let idx = self
+            .show
+            .presets
+            .iter()
+            .position(|p| p.id == id)
+            .ok_or("Preset not found")?;
+        if let Some(name) = name {
+            self.show.presets[idx].name = name;
+        }
+        if refresh_from_programmer {
+            let feature_group = self.show.presets[idx].feature_group.clone();
+            let covers_all = self.show.presets[idx].covers_all;
+            let values = self.collect_preset_values(feature_group, covers_all)?;
+            self.show.presets[idx].values = values;
+        }
+        Ok(self.show.presets[idx].clone())
+    }
+
+    pub fn duplicate_preset(&mut self, id: Uuid, name: Option<String>) -> Result<Preset, String> {
+        let source = self
+            .show
+            .presets
+            .iter()
+            .find(|p| p.id == id)
+            .ok_or("Preset not found")?
+            .clone();
+        let preset = Preset {
+            id: Uuid::new_v4(),
+            number: self.next_preset_number(),
+            name: name.unwrap_or_else(|| format!("{} copy", source.name)),
+            feature_group: source.feature_group,
+            covers_all: source.covers_all,
+            values: source.values,
+        };
+        self.show.presets.push(preset.clone());
+        Ok(preset)
+    }
+
+    pub fn apply_preset(&mut self, id: Uuid, replace: bool) -> Result<(), String> {
         let preset = self
             .show
             .presets
@@ -338,8 +421,35 @@ impl ShowEngine {
         if self.programmer.selection.is_empty() {
             return Err("No fixtures selected".into());
         }
-        for (k, v) in preset.values {
-            self.programmer.values.insert(k, v);
+        if replace && !preset.covers_all {
+            let to_remove: Vec<String> = self
+                .programmer
+                .values
+                .keys()
+                .filter(|attr| {
+                    self.programmer.selection.iter().any(|fx_id| {
+                        self.attribute_feature_group(*fx_id, attr)
+                            .map(|fg| fg == preset.feature_group)
+                            .unwrap_or(false)
+                    })
+                })
+                .cloned()
+                .collect();
+            for key in to_remove {
+                self.programmer.values.remove(&key);
+            }
+        } else if replace {
+            self.programmer.values.clear();
+        }
+        for (attr, value) in preset.values {
+            let relevant = self
+                .programmer
+                .selection
+                .iter()
+                .any(|fx_id| self.fixture_has_attribute(*fx_id, &attr));
+            if relevant {
+                self.programmer.values.insert(attr, value);
+            }
         }
         Ok(())
     }

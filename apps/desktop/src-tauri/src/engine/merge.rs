@@ -179,29 +179,8 @@ pub fn render_universes(
     apply(&mut buffers, &dimmer_htp);
 
     if blackout {
-        for fx in &show.fixtures {
-            let Some(def) = def_map.get(&fx.definition_id) else {
-                continue;
-            };
-            for attr in &def.attributes {
-                match attr.name.as_str() {
-                    "dimmer" => {
-                        write_channel(&mut buffers, fx.universe, fx.address, attr.offset, 0);
-                        if let Some(fine_off) = attr.fine_offset {
-                            write_channel(&mut buffers, fx.universe, fx.address, fine_off, 0);
-                        }
-                    }
-                    "blackout" => {
-                        // fixture blackout channel: full = blacked out
-                        write_channel(&mut buffers, fx.universe, fx.address, attr.offset, 255);
-                    }
-                    "shutter" => {
-                        // closed shutter during master blackout
-                        write_channel(&mut buffers, fx.universe, fx.address, attr.offset, 0);
-                    }
-                    _ => {}
-                }
-            }
+        for buffer in buffers.iter_mut() {
+            buffer.fill(0);
         }
     }
 
@@ -246,6 +225,7 @@ mod tests {
                 fine_offset: None,
                 default: 0,
                 highlight: 255,
+                choices: vec![],
             }],
         }
     }
@@ -310,5 +290,83 @@ mod tests {
         let buffers = render_universes(&show, &[def], &Programmer::default(), false);
         // HTP of 0.4 and 0.7 => 0.7 * 255 ~= 178
         assert_eq!(buffers[0][0], 179);
+    }
+
+    #[test]
+    fn master_blackout_zeros_all_channels() {
+        let def = FixtureDefinition {
+            id: "generic.rgb".into(),
+            manufacturer: "Generic".into(),
+            name: "RGB".into(),
+            mode: "3ch".into(),
+            category: "LED".into(),
+            channel_count: 3,
+            attributes: vec![
+                AttributeDef {
+                    name: "red".into(),
+                    feature_group: FeatureGroup::Color,
+                    offset: 0,
+                    fine_offset: None,
+                    default: 0,
+                    highlight: 255,
+                    choices: vec![],
+                },
+                AttributeDef {
+                    name: "green".into(),
+                    feature_group: FeatureGroup::Color,
+                    offset: 1,
+                    fine_offset: None,
+                    default: 0,
+                    highlight: 255,
+                    choices: vec![],
+                },
+                AttributeDef {
+                    name: "blue".into(),
+                    feature_group: FeatureGroup::Color,
+                    offset: 2,
+                    fine_offset: None,
+                    default: 0,
+                    highlight: 255,
+                    choices: vec![],
+                },
+            ],
+        };
+        let fx_id = Uuid::new_v4();
+        let list_id = Uuid::new_v4();
+        let mut show = ShowFile::default();
+        show.fixtures.push(PatchedFixture {
+            id: fx_id,
+            fid: 1,
+            name: "RGB1".into(),
+            definition_id: def.id.clone(),
+            universe: 1,
+            address: 1,
+        });
+        show.cue_lists.push(CueList {
+            id: list_id,
+            name: "Main".into(),
+            cues: vec![Cue {
+                id: Uuid::new_v4(),
+                number: 1.0,
+                name: "Full".into(),
+                fade_ms: 0,
+                values: BTreeMap::from([
+                    (attr_key(fx_id, "red"), 1.0),
+                    (attr_key(fx_id, "green"), 0.5),
+                    (attr_key(fx_id, "blue"), 0.25),
+                ]),
+            }],
+        });
+        show.playbacks[0].cue_list_id = Some(list_id);
+        show.playbacks[0].current_cue_index = Some(0);
+        show.playbacks[0].fader = 1.0;
+
+        let live = render_universes(&show, &[def.clone()], &Programmer::default(), false);
+        assert_eq!(live[0][0], 255);
+        assert_eq!(live[0][1], 128);
+        assert_eq!(live[0][2], 64);
+
+        let blacked = render_universes(&show, &[def], &Programmer::default(), true);
+        assert_eq!(blacked[0][0..3], [0, 0, 0]);
     }
 }

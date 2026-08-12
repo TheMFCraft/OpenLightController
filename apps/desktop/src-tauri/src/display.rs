@@ -1,6 +1,7 @@
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
 const SCREEN_PREFIX: &str = "screen-";
+const MAIN_WINDOW_LABEL: &str = "main";
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -25,6 +26,9 @@ pub struct OpenScreenWindowOptions {
 }
 
 fn validate_screen_label(label: &str) -> Result<(), String> {
+    if label == MAIN_WINDOW_LABEL {
+        return Err("The main console window cannot be controlled from screen layouts".into());
+    }
     if !label.starts_with(SCREEN_PREFIX) {
         return Err("Screen window label must start with 'screen-'".into());
     }
@@ -32,6 +36,22 @@ fn validate_screen_label(label: &str) -> Result<(), String> {
         return Err("Screen window label is too short".into());
     }
     Ok(())
+}
+
+fn monitor_is_primary(app: &AppHandle, monitor_index: usize) -> Result<bool, String> {
+    let primary_name = app
+        .primary_monitor()
+        .map_err(|e| e.to_string())?
+        .and_then(|m| m.name().cloned());
+    let monitors = app.available_monitors().map_err(|e| e.to_string())?;
+    let Some(monitor) = monitors.into_iter().nth(monitor_index) else {
+        return Ok(false);
+    };
+    let name = monitor
+        .name()
+        .cloned()
+        .unwrap_or_else(|| format!("Monitor {}", monitor_index + 1));
+    Ok(primary_name.as_ref() == Some(&name))
 }
 
 fn encode_query_component(value: &str) -> String {
@@ -104,6 +124,12 @@ pub async fn open_screen_window(
     .decorations(true);
 
     if let Some(idx) = options.monitor_index {
+        if monitor_is_primary(&app, idx)? {
+            return Err(
+                "External screens cannot open on the primary monitor — the main console runs there. Choose a secondary monitor or the default windowed layout.".into(),
+            );
+        }
+        let fullscreen = options.fullscreen.unwrap_or(false);
         if let Ok(monitors) = app.available_monitors() {
             if let Some(monitor) = monitors.into_iter().nth(idx) {
                 let pos = monitor.position();
@@ -111,16 +137,23 @@ pub async fn open_screen_window(
                 builder = builder
                     .position(pos.x as f64, pos.y as f64)
                     .inner_size(size.width as f64, size.height as f64);
-                if options.fullscreen.unwrap_or(true) {
+                if fullscreen {
                     builder = builder.fullscreen(true);
                 }
             }
         }
     } else if options.fullscreen.unwrap_or(false) {
-        builder = builder.fullscreen(true);
+        return Err(
+            "Fullscreen requires a secondary monitor. Use the default windowed layout on the primary display.".into(),
+        );
     }
 
     builder.build().map_err(|e| e.to_string())?;
+    if let Some(main) = app.get_webview_window(MAIN_WINDOW_LABEL) {
+        let _ = main.unminimize();
+        let _ = main.show();
+        let _ = main.set_focus();
+    }
     Ok(())
 }
 
@@ -131,6 +164,19 @@ pub async fn close_screen_window(app: AppHandle, window_label: String) -> Result
         window.close().map_err(|e| e.to_string())?;
     }
     Ok(())
+}
+
+pub fn close_all_screen_windows(app: &AppHandle) {
+    let labels: Vec<String> = app
+        .webview_windows()
+        .into_keys()
+        .filter(|label| label.starts_with(SCREEN_PREFIX))
+        .collect();
+    for label in labels {
+        if let Some(window) = app.get_webview_window(&label) {
+            let _ = window.close();
+        }
+    }
 }
 
 #[tauri::command]

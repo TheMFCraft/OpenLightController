@@ -87,6 +87,7 @@ export function SettingsDialog({ open, onClose }: Props) {
           </button>
         </header>
 
+        <div className={styles.dialogBody}>
         <section className={styles.section}>
           <h3>Touch &amp; Keyboard</h3>
           <label className={styles.checkRow}>
@@ -146,6 +147,7 @@ export function SettingsDialog({ open, onClose }: Props) {
         </section>
 
         {message ? <div className={styles.error}>{message}</div> : null}
+        </div>
       </div>
     </div>
   );
